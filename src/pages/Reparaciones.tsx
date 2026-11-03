@@ -182,10 +182,10 @@ export default function Reparaciones() {
               alt="Técnico de iSphone reparando un iPhone"
               className="absolute inset-0 w-full h-full object-cover object-[70%_center] sm:object-center"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent sm:from-white/70 sm:via-transparent" />
+            <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-white/70 to-transparent" />
             <div className="relative w-1/2 sm:w-[45%] px-5 sm:px-10 lg:px-14 py-8">
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
-                ¿Qué deseas reparar?
+                Reparamos tu equipo
               </h1>
               <p className="hidden sm:block text-lg text-gray-600 leading-relaxed">
                 Selecciona tu dispositivo y elige el tipo de reparación.
