@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Star, Camera, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { ScrollReveal } from '../shared'
 import { useSeo } from '../seo'
 
@@ -17,6 +17,7 @@ const GOOGLE_REVIEWS = [
   { name: 'Willmer Ricardo Mora', text: 'Exelente atención. Muy buena variedad de productos y el almacén es muy bonito' },
   { name: 'Cristian Sarmiento', text: 'Compré un iPhone hace unos años y todo perfecto y este año regresé a hacer el cambio por uno más nuevo y me recibieron el anterior en parte de pago todo súper ágil y seguro' },
 ]
+const GOOGLE_REVIEW_COUNT = 52
 const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
 
@@ -59,6 +60,14 @@ function PhotoCarousel() {
       <button type="button" onClick={() => go(index + 1)} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
         <ChevronRight className="w-5 h-5" />
       </button>
+      <a
+        href={MAPS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-3 py-2 text-sm font-medium text-gray-900 shadow hover:bg-white"
+      >
+        Abrir en Maps <ExternalLink className="w-4 h-4 text-blue-600" />
+      </a>
       <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5">
         {Array.from({ length: count }).map((_, i) => (
           <button
@@ -93,20 +102,6 @@ export default function Visitanos() {
           <PhotoCarousel />
         </ScrollReveal>
 
-        {/* Mapa */}
-        <ScrollReveal className="mt-10">
-          <div className="relative overflow-hidden rounded-3xl bg-gray-100 aspect-[4/3] sm:aspect-[21/9]">
-            <iframe
-              title="Ubicación de iSphone"
-              src={`https://www.google.com/maps?q=${encodeURIComponent('Isphone S.A.S Ramiriquí')}&output=embed`}
-              className="w-full h-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-            <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" aria-label="Abrir en Google Maps" className="absolute inset-0" />
-          </div>
-        </ScrollReveal>
-
         {/* Reseñas */}
         <ScrollReveal className="mt-16">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Lo que dicen nuestros clientes</h2>
@@ -123,9 +118,9 @@ export default function Visitanos() {
               ))}
             </div>
           </div>
-          <p className="mt-5 text-center">
-            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-700 hover:underline underline-offset-4">
-              Ver en Google
+          <p className="mt-5">
+            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:underline underline-offset-4">
+              Ver en Google ({GOOGLE_REVIEW_COUNT})
             </a>
           </p>
         </ScrollReveal>
