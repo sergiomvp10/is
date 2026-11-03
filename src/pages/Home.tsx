@@ -82,7 +82,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-center sm:justify-between mb-8 gap-4 px-14 sm:px-0">
               <div className="text-center sm:text-left">
-                <h2 className="text-xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Explora por categoría</h2>
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Encuentra lo que buscas</h2>
               </div>
               <Link
                 to="/catalogo"
