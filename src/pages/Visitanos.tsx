@@ -1,5 +1,5 @@
 import { MapPin, Clock, Star, Camera } from 'lucide-react'
-import { ScrollReveal, WHATSAPP_LINK, testimonials } from '../shared'
+import { ScrollReveal, WHATSAPP_LINK } from '../shared'
 import { useSeo } from '../seo'
 
 const CONTACT_LINKS = [
@@ -13,6 +13,17 @@ const CONTACT_LINKS = [
 const ADDRESS = 'Ramiriquí, Boyacá'
 const HOURS = 'Lunes a sábado'
 const PHOTOS = [1, 2, 3, 4, 5, 6]
+
+const GOOGLE_REVIEWS = [
+  { name: 'Nicol Plazas', text: 'Muy buen servicio, sus productos son de excelente calidad.' },
+  { name: 'Santiago Mora', text: 'Recomendados muy serios con las entregas y excelentes productos' },
+  { name: 'Vanessa Pinzon', text: 'Me encantó, llegó todo a tiempo y en perfecto estado súper recomendado para comprar sus celulares.' },
+  { name: 'Andrés Quiroga', text: 'Excelente lugar, muy buenos precios, excelente calidad de sus productos y gran variedad, recomendado' },
+  { name: 'Danna Noguera', text: 'Excelente atención, me ayudaron de forma amable y rápida, explicaron todo con claridad y el servicio fue muy bueno. Totalmente recomendado.' },
+  { name: 'William Ricardo Medina', text: 'Gran atención calidad en sus productos y servicios.' },
+  { name: 'Willmer Ricardo Mora', text: 'Exelente atención. Muy buena variedad de productos y el almacén es muy bonito' },
+  { name: 'Cristian Sarmiento', text: 'Compré un iPhone hace unos años y todo perfecto y este año regresé a hacer el cambio por uno más nuevo y me recibieron el anterior en parte de pago todo súper ágil y seguro' },
+]
 const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
 
@@ -83,13 +94,13 @@ export default function Visitanos() {
             </a>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {testimonials.map(t => (
-              <div key={t.name} className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
+            {GOOGLE_REVIEWS.map(r => (
+              <div key={r.name} className="flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
                 <div className="flex gap-0.5 text-amber-400">
-                  {Array.from({ length: t.rating }).map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                 </div>
-                <p className="mt-3 text-sm text-gray-600 leading-relaxed">“{t.text}”</p>
-                <p className="mt-4 text-sm font-semibold text-gray-900">{t.name} <span className="font-normal text-gray-500">· {t.city}</span></p>
+                <p className="mt-3 flex-1 text-sm text-gray-600 leading-relaxed">“{r.text}”</p>
+                <p className="mt-4 text-sm font-semibold text-gray-900">{r.name} <span className="font-normal text-gray-500">· Google</span></p>
               </div>
             ))}
           </div>
