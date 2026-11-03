@@ -3,13 +3,14 @@ import { Trash2, Edit, Plus, LogOut, Save, X, FolderOpen, Package, Home, Zap, Se
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://isphone-api.vercel.app'
 
-type Variant = { storage: string; color: string; sim: string; price: string }
+type Variant = { storage: string; color: string; sim: string; price: string; web_id?: string }
 type ColorOption = { name: string; hex: string; images: string[] }
 type Product = {
   id: number; name: string; brand: string; condition: string; image: string; images?: string[]
   storage: string[]; colors: string[]; sim_options?: string[]; price_range: string; badge: string | null; category: string | null
   variants?: Variant[]
   featured?: boolean
+  web_id?: string | null
   color_options?: ColorOption[]
 }
 type Category = { id: number; name: string; slug: string; cover_image: string; header_image?: string; position: number }
@@ -275,6 +276,7 @@ function Admin() {
   const [formError, setFormError] = useState('')
   const [formSim, setFormSim] = useState('')
   const [formPrice, setFormPrice] = useState('')
+  const [formWebId, setFormWebId] = useState('')
   const [formBadge, setFormBadge] = useState('')
   const [formCategory, setFormCategory] = useState('')
   const [formFeatured, setFormFeatured] = useState(false)
@@ -358,7 +360,7 @@ function Admin() {
   // --- Products ---
   const resetProductForm = () => {
     setFormName(''); setFormBrand('apple'); setFormCondition('Nuevo'); setFormStorage('')
-    setFormColorOpts([]); setFormError(''); setFormSim(''); setFormPrice(''); setFormBadge(''); setFormCategory(''); setFormImage('')
+    setFormColorOpts([]); setFormError(''); setFormSim(''); setFormPrice(''); setFormWebId(''); setFormBadge(''); setFormCategory(''); setFormImage('')
     setFormFeatured(false)
     setFormImages([])
     setFormVariants([])
@@ -374,7 +376,7 @@ function Admin() {
         : p.colors.map(name => ({ name, hex: '#888888', images: [] })),
     )
     setFormSim((p.sim_options || []).join(','))
-    setFormPrice(p.price_range); setFormBadge(p.badge || ''); setFormCategory(p.category || '')
+    setFormPrice(p.price_range); setFormWebId(p.web_id || ''); setFormBadge(p.badge || ''); setFormCategory(p.category || '')
     setFormFeatured(!!p.featured)
     setFormVariants(p.variants || [])
     setFormImage(p.image)
@@ -406,8 +408,8 @@ function Admin() {
         colors: colorOptions.map(c => c.name),
         color_options: colorOptions,
         sim_options: formSim.split(',').map(s => s.trim()).filter(Boolean),
-        price_range: formPrice, badge: formBadge || null, category: formCategory || null,
-        variants: formVariants.filter(v => v.price.trim()),
+        price_range: formPrice, web_id: formWebId.trim() || null, badge: formBadge || null, category: formCategory || null,
+        variants: formVariants.filter(v => v.price.trim()).map(v => ({ ...v, web_id: v.web_id?.trim() || undefined })),
         featured: formFeatured,
       }
       const url = editing ? `${API_URL}/api/admin/products/${editing.id}` : `${API_URL}/api/admin/products`
@@ -807,6 +809,7 @@ function Admin() {
                   </div>
                   <Input label="Tipos de SIM (separar con coma, opcional)" value={formSim} onChange={setFormSim} placeholder="eSIM,SIM Física" />
                   <Input label="Rango de precio" value={formPrice} onChange={setFormPrice} placeholder="Desde $3.400.000" required />
+                  <Input label="ID web (para el precio del Sheets si no tiene variantes)" value={formWebId} onChange={setFormWebId} placeholder="AIRTAG" />
                   <Input label="Etiqueta (opcional)" value={formBadge} onChange={setFormBadge} placeholder="Pro, Ultra, Nuevo..." />
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <input type="checkbox" checked={formFeatured} onChange={e => setFormFeatured(e.target.checked)}
@@ -858,6 +861,8 @@ function Admin() {
                                 </select>
                               )}
                               <input value={v.price} onChange={e => update('price', e.target.value)} placeholder="$3.400.000"
+                                className="flex-1 min-w-0 px-2 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500" />
+                              <input value={v.web_id ?? ''} onChange={e => update('web_id', e.target.value)} placeholder="ID web" title="ID web del Sheets"
                                 className="flex-1 min-w-0 px-2 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500" />
                               <button type="button" onClick={() => setFormVariants(formVariants.filter((_, i) => i !== idx))}
                                 className="p-2 text-gray-500 hover:text-red-400 shrink-0">

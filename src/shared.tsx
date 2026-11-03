@@ -46,10 +46,8 @@ const PRICES_SHEET_GIDS = ['0', '843702912', '108798763', '1975755580', '1705978
 
 const idPart = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
 
-// "ID web": id del producto + almacenamiento + color + SIM de la variante, p. ej. 14-256gb-esim.
-export function webId(productId: number, v?: Partial<Variant>): string {
-  return [String(productId), v?.storage ?? '', v?.color ?? '', v?.sim ?? ''].map(idPart).filter(Boolean).join('-')
-}
+// "ID web": lo escribe el admin en la variante (o en el producto si no tiene variantes) y se busca en la hoja.
+const sheetKey = (id?: string | null) => (id ?? '').trim().toLowerCase()
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -100,7 +98,7 @@ function fetchSheetPrices(): Promise<Map<string, number>> {
   return sheetPrices
 }
 
-type PricedProduct = { id: number; price_range?: string; priceRange?: string; variants?: Variant[] }
+type PricedProduct = { id: number; web_id?: string | null; price_range?: string; priceRange?: string; variants?: Variant[] }
 
 // Reemplaza los precios de los productos (y su rango "Desde ...") por los de la hoja.
 export async function withSheetPrices<T extends PricedProduct>(products: T[]): Promise<T[]> {
@@ -108,11 +106,11 @@ export async function withSheetPrices<T extends PricedProduct>(products: T[]): P
   if (prices.size === 0) return products
   return products.map(p => {
     if (!p.variants?.length) {
-      const price = prices.get(webId(p.id))
+      const price = prices.get(sheetKey(p.web_id))
       return price ? { ...p, price_range: formatPrice(price), priceRange: formatPrice(price) } : p
     }
     const variants = p.variants.map(v => {
-      const price = prices.get(webId(p.id, v))
+      const price = prices.get(sheetKey(v.web_id))
       return price ? { ...v, price: formatPrice(price) } : v
     })
     const nums = variants.map(v => priceNumber(v.price)).filter(n => n > 0)
@@ -175,6 +173,7 @@ export type Variant = {
   color: string
   sim?: string
   price: string
+  web_id?: string
 }
 
 export type Product = {
