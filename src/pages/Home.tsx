@@ -373,12 +373,20 @@ export default function Home() {
       </section>
 
       {/* Texto SEO + cobertura */}
-      <section className="py-14 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-5 gap-10">
-          <ScrollReveal className="lg:col-span-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+      <section className="py-8 lg:py-10 bg-gray-50">
+        <details className="group max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <summary className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 cursor-pointer list-none">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-700">
               Tienda de tecnología Apple y Android en Tunja, Boyacá y Bogotá
             </h2>
+            <span className="inline-flex items-center gap-1 shrink-0 text-sm font-medium text-purple-700">
+              <span className="group-open:hidden">Ver más</span>
+              <span className="hidden group-open:inline">Ver menos</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+        <div className="grid lg:grid-cols-5 gap-10 mt-6">
+          <ScrollReveal className="lg:col-span-3">
             <div className="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
               <p>
                 En iSphone vendemos <Link to="/categoria/iphone" className="text-purple-700 font-medium hover:underline">iPhone</Link>,{' '}
@@ -409,6 +417,7 @@ export default function Home() {
             </div>
           </ScrollReveal>
         </div>
+        </details>
       </section>
 
       {/* Preguntas frecuentes */}
