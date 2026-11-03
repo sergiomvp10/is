@@ -167,12 +167,12 @@ export default function Home() {
               )}
             </div>
 
-            {/* Móvil y tablet: iPhone y Android horizontales + resto en 2 columnas */}
+            {/* Móvil y tablet: iPhone y Android con texto sobre la imagen + resto en 2 columnas */}
             <div className="lg:hidden">
               {categories.length === 0 ? (
                 <>
                   <div className="space-y-4">
-                    {[0, 1].map(i => <div key={i} className="h-48 sm:h-64 rounded-3xl bg-gray-100 animate-pulse" />)}
+                    {[0, 1].map(i => <div key={i} className="aspect-[24/25] rounded-3xl bg-gray-100 animate-pulse" />)}
                   </div>
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     {[0, 1, 2, 3].map(i => <div key={i} className="aspect-square rounded-2xl bg-gray-100 animate-pulse" />)}
@@ -185,24 +185,22 @@ export default function Home() {
                       <ScrollReveal key={cat.id} delay={i * 0.05}>
                         <Link
                           to={categoryPath(cat)}
-                          className="group flex h-48 sm:h-64 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm"
+                          className="group relative block aspect-[24/25] rounded-3xl overflow-hidden bg-white shadow-sm"
                         >
-                          <div className="flex flex-col justify-center w-[45%] pl-5 sm:pl-8 pr-2">
-                            <h3 className="text-2xl sm:text-4xl font-bold tracking-tight text-gray-900">{cat.name}</h3>
+                          <img
+                            src={cat.cover_image}
+                            alt={cat.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="relative text-center px-5 pt-6 sm:pt-10">
+                            <h3 className="text-3xl sm:text-5xl font-semibold tracking-tight text-gray-900">{cat.name}</h3>
                             {CATEGORY_TAGLINES[cat.slug] && (
-                              <p className="mt-1.5 text-xs sm:text-sm text-gray-600 leading-snug">{CATEGORY_TAGLINES[cat.slug]}</p>
+                              <p className="mt-1.5 sm:mt-3 text-sm sm:text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
                             )}
-                            <span className="inline-flex items-center gap-1 self-start mt-3 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white text-xs sm:text-sm font-medium px-4 py-2 transition-colors">
-                              Comprar <ArrowRight className="w-3.5 h-3.5" />
+                            <span className="inline-flex items-center gap-1 mt-3 sm:mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white text-sm sm:text-base font-medium px-5 py-2 sm:px-6 sm:py-2.5 transition-colors">
+                              Comprar <ArrowRight className="w-4 h-4" />
                             </span>
-                          </div>
-                          <div className="w-[55%]">
-                            <img
-                              src={cat.cover_image}
-                              alt={cat.name}
-                              loading="lazy"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
                           </div>
                         </Link>
                       </ScrollReveal>
