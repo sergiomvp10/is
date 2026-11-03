@@ -29,6 +29,17 @@ function mapProducts(data: RawProduct[]): Product[] {
   }))
 }
 
+const CATEGORY_TAGLINES: Record<string, string> = {
+  iphone: 'Diseñado para un mundo extraordinario.',
+  android: 'Potencia que se adapta a ti.',
+  accesorios: 'Todo lo que complementa tu experiencia.',
+  watch: 'Tecnología que te acompaña en cada paso.',
+  ipads: 'Creatividad y productividad en tus manos.',
+  macbooks: 'Potencia para llevar tus ideas más lejos.',
+}
+
+const categoryPath = (cat: Category) => cat.slug === 'ofertas' ? '/ofertas' : `/categoria/${cat.slug}`
+
 const TRUST_ITEMS = [
   { icon: ShieldCheck, title: 'Garantía incluida', text: 'Todos nuestros equipos con garantía' },
   { icon: Truck, title: 'Contra entrega', text: 'Tunja, Boyacá, Bogotá, Chía y Cajicá' },
@@ -92,7 +103,82 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-5">
+            {/* Desktop: iPhone y Android protagonistas + resto en fila */}
+            <div className="hidden lg:block">
+              {categories.length === 0 ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    {[0, 1].map(i => <div key={i} className="h-[620px] rounded-3xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                  <div className="grid grid-cols-4 gap-6 mt-6">
+                    {[0, 1, 2, 3].map(i => <div key={i} className="h-44 rounded-2xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    {categories.slice(0, 2).map((cat, i) => (
+                      <ScrollReveal key={cat.id} delay={i * 0.05}>
+                        <Link
+                          to={categoryPath(cat)}
+                          className="group flex flex-col h-[620px] rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow"
+                        >
+                          <div className="text-center px-6 pt-10">
+                            <h3 className="text-5xl font-semibold tracking-tight text-gray-900">{cat.name}</h3>
+                            {CATEGORY_TAGLINES[cat.slug] && (
+                              <p className="mt-3 text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
+                            )}
+                            <span className="inline-flex items-center gap-1 mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white font-medium px-6 py-2.5 transition-colors">
+                              Ver modelos <ArrowRight className="w-4 h-4" />
+                            </span>
+                          </div>
+                          <div className="flex-1 min-h-0 mt-6">
+                            <img
+                              src={cat.cover_image}
+                              alt={cat.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                        </Link>
+                      </ScrollReveal>
+                    ))}
+                  </div>
+                  {categories.length > 2 && (
+                    <div className="grid grid-cols-4 gap-6 mt-6">
+                      {categories.slice(2).map((cat, i) => (
+                        <ScrollReveal key={cat.id} delay={(i + 2) * 0.05}>
+                          <Link
+                            to={categoryPath(cat)}
+                            className="group flex h-44 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm hover:shadow-lg transition-shadow"
+                          >
+                            <div className="flex flex-col w-1/2 p-5">
+                              <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">{cat.name}</h3>
+                              {CATEGORY_TAGLINES[cat.slug] && (
+                                <p className="mt-1.5 text-xs text-gray-600 leading-snug">{CATEGORY_TAGLINES[cat.slug]}</p>
+                              )}
+                              <span className="mt-auto w-8 h-8 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white flex items-center justify-center transition-colors">
+                                <ArrowRight className="w-4 h-4" />
+                              </span>
+                            </div>
+                            <div className="w-1/2">
+                              <img
+                                src={cat.cover_image}
+                                alt={cat.name}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            </div>
+                          </Link>
+                        </ScrollReveal>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 lg:hidden">
               {categories.length === 0 && Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : ''}>
                   <div className={`rounded-2xl aspect-square bg-gray-100 animate-pulse ${i === 0 ? 'lg:aspect-auto lg:h-full lg:rounded-3xl' : ''}`} />
@@ -102,7 +188,7 @@ export default function Home() {
               {categories.map((cat, i) => (
                 <ScrollReveal key={cat.id} delay={i * 0.05} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : i === 1 ? 'lg:row-span-2' : ''}>
                   <Link
-                    to={cat.slug === 'ofertas' ? '/ofertas' : `/categoria/${cat.slug}`}
+                    to={categoryPath(cat)}
                     className="group flex flex-col h-full"
                   >
                     {i < 2 ? (
