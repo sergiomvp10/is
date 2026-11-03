@@ -12,6 +12,7 @@ const Reparaciones = lazy(() => import('./pages/Reparaciones.tsx'))
 const Envios = lazy(() => import('./pages/Envios.tsx'))
 const Ofertas = lazy(() => import('./pages/Ofertas.tsx'))
 const Contacto = lazy(() => import('./pages/Contacto.tsx'))
+const Faq = lazy(() => import('./pages/Faq.tsx'))
 const CategoriaDetail = lazy(() => import('./pages/CategoriaDetail.tsx'))
 const ProductoDetail = lazy(() => import('./pages/ProductoDetail.tsx'))
 const Municipio = lazy(() => import('./pages/Municipio.tsx'))
@@ -48,6 +49,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/envios" element={<Envios />} />
             <Route path="/ofertas" element={<Ofertas />} />
             <Route path="/contacto" element={<Contacto />} />
+            <Route path="/faq" element={<Faq />} />
             <Route path="/categoria/:slug" element={<CategoriaDetail />} />
             <Route path="/producto/:id" element={<ProductoDetail />} />
             <Route path="/celulares/:slug" element={<Municipio />} />

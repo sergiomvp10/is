@@ -60,6 +60,7 @@ export default function Layout() {
     { to: '/reparaciones', label: 'Reparaciones' },
     { to: '/trade-in', label: 'Trade-In' },
     { to: '/ofertas', label: 'Ofertas' },
+    { to: '/faq', label: 'FAQ' },
     { to: '/contacto', label: 'Contacto' },
   ]
 
