@@ -176,16 +176,21 @@ export default function Reparaciones() {
     <section className="py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              ¿Qué deseas reparar?
-            </h1>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Selecciona tu dispositivo y elige el tipo de reparación.
-            </p>
-            <p className="text-sm text-gray-500 mt-3">
-              Servicio técnico Apple y Android en Tunja, Boyacá, Bogotá, Chía y Cajicá · repuestos originales · garantía
-            </p>
+          <div className="relative overflow-hidden rounded-3xl mb-10 min-h-[220px] sm:min-h-0 sm:aspect-[16/9] flex items-center">
+            <img
+              src="/images/reparaciones-hero.webp"
+              alt="Técnico de iSphone reparando un iPhone"
+              className="absolute inset-0 w-full h-full object-cover object-[70%_center] sm:object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent sm:from-white/70 sm:via-transparent" />
+            <div className="relative w-1/2 sm:w-[45%] px-5 sm:px-10 lg:px-14 py-8">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
+                ¿Qué deseas reparar?
+              </h1>
+              <p className="hidden sm:block text-lg text-gray-600 leading-relaxed">
+                Selecciona tu dispositivo y elige el tipo de reparación.
+              </p>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -275,6 +280,9 @@ export default function Reparaciones() {
         <div className="mt-14 grid md:grid-cols-2 gap-8 border-t border-gray-100 pt-10">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Servicio técnico Apple y Android en Tunja y Boyacá</h2>
+            <p className="text-sm text-gray-500 mb-3">
+              Servicio técnico Apple y Android en Tunja, Boyacá, Bogotá, Chía y Cajicá · repuestos originales · garantía
+            </p>
             <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
               Arreglamos iPhone, iPad, MacBook y laptops, Apple Watch y celulares Android (Samsung y más): cambio de pantalla, reemplazo de batería,
               puerto de carga, cámara, altavoz y micrófono, daños por agua o humedad, restauración de software y reparación de placa.
