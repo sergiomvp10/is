@@ -113,7 +113,7 @@ export default function Home() {
                               <p className="mt-3 text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
                             )}
                             <span className="inline-flex items-center gap-1 mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white font-medium px-6 py-2.5 transition-colors">
-                              Comprar <ArrowRight className="w-4 h-4" />
+                              Comprar
                             </span>
                           </div>
                           <div className="flex-1 min-h-0 mt-6">
@@ -188,7 +188,7 @@ export default function Home() {
                               <p className="mt-1.5 text-xs sm:text-sm text-gray-600 leading-snug">{CATEGORY_TAGLINES[cat.slug]}</p>
                             )}
                             <span className="inline-flex items-center gap-1 self-start mt-3 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white text-xs sm:text-sm font-medium px-4 py-2 transition-colors">
-                              Comprar <ArrowRight className="w-3.5 h-3.5" />
+                              Comprar
                             </span>
                           </div>
                           <div className="w-[55%]">
