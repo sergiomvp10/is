@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Smartphone } from 'lucide-react'
-import { ScrollReveal, API_URL, Product, Category, productPath, serviceCities } from '../shared'
+import { ScrollReveal, API_URL, Product, Category, productPath, serviceCities, fetchProducts } from '../shared'
 import { useSeo, SITE_URL } from '../seo'
 import Breadcrumbs from '../components/Breadcrumbs'
 
@@ -97,11 +97,11 @@ export default function CategoriaDetail() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/api/products`).then(r => r.json()),
+      fetchProducts<Product & { price_range: string }>(),
       fetch(`${API_URL}/api/categories`).then(r => r.json()),
     ])
       .then(([prods, cats]) => {
-        const mapped = prods.map((p: { id: number; name: string; brand: string; condition: string; image: string; storage: string[]; colors: string[]; price_range: string; badge?: string; category?: string }) => ({
+        const mapped = prods.map((p: Product & { price_range: string }) => ({
           ...p,
           priceRange: p.price_range,
           image: resolveImage(p.image),

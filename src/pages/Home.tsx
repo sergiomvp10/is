@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin } from 'lucide-react'
 import HeroVideo from '../components/HeroVideo'
-import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath } from '../shared'
+import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath, fetchProducts } from '../shared'
 import { useSeo } from '../seo'
 
 const BRAND_LABELS: Record<string, string> = {
@@ -56,7 +56,7 @@ export default function Home() {
       .then(setCategories)
       .catch(() => {})
       .finally(() => setCategoriesReady(true))
-    fetchList<RawProduct>('/api/products').then(data => setProducts(mapProducts(data))).catch(() => {})
+    fetchProducts<RawProduct>().then(data => setProducts(mapProducts(data))).catch(() => {})
   }, [])
 
   const featuredSource = products.some(p => p.featured) ? products.filter(p => p.featured) : products

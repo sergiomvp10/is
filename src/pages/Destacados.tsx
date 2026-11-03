@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Smartphone } from 'lucide-react'
-import { ScrollReveal, API_URL, Product, productPath } from '../shared'
+import { ScrollReveal, API_URL, Product, productPath, fetchProducts } from '../shared'
 import { useSeo } from '../seo'
 
 const BRAND_LABELS: Record<string, string> = {
@@ -28,9 +28,8 @@ export default function Destacados() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    fetch(`${API_URL}/api/products`)
-      .then(r => r.json())
-      .then((data: Array<Product & { price_range?: string }>) => {
+    fetchProducts<Product & { price_range?: string }>()
+      .then(data => {
         const mapped = (Array.isArray(data) ? data : []).map(p => ({
           ...p,
           priceRange: p.price_range || p.priceRange || '',
