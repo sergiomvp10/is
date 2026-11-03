@@ -1,11 +1,11 @@
-import { MapPin, Clock, Star, Camera } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Star, Camera, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ScrollReveal } from '../shared'
 import { useSeo } from '../seo'
 
-// TODO: reemplazar por la dirección exacta y las fotos reales de la sede.
-const ADDRESS = 'Ramiriquí, Boyacá'
-const HOURS = 'Lunes a sábado'
-const PHOTOS = [1, 2, 3, 4, 5, 6]
+// TODO: agregar las URLs de las fotos reales de la sede.
+const PHOTOS: string[] = []
+const PLACEHOLDER_COUNT = 5
 
 const GOOGLE_REVIEWS = [
   { name: 'Nicol Plazas', text: 'Muy buen servicio, sus productos son de excelente calidad.' },
@@ -19,6 +19,60 @@ const GOOGLE_REVIEWS = [
 ]
 const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
+
+function PhotoCarousel() {
+  const count = PHOTOS.length || PLACEHOLDER_COUNT
+  const [index, setIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = window.setInterval(() => setIndex(i => (i + 1) % count), 4000)
+    return () => window.clearInterval(id)
+  }, [paused, count])
+
+  const go = (i: number) => setIndex((i + count) % count)
+
+  return (
+    <div
+      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gray-100 shadow-sm aspect-[4/3] sm:aspect-[16/10]"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="flex h-full transition-transform duration-700 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="w-full h-full shrink-0" aria-hidden={i !== index}>
+            {PHOTOS[i] ? (
+              <img src={PHOTOS[i]} alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`} className="w-full h-full object-cover" loading={i === 0 ? 'eager' : 'lazy'} />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-purple-50 text-gray-300">
+                <Camera className="w-10 h-10" />
+                <span className="text-sm text-gray-400">Foto {i + 1}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => go(index - 1)} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button type="button" onClick={() => go(index + 1)} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5">
+        {Array.from({ length: count }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => go(i)}
+            aria-label={`Ver foto ${i + 1}`}
+            className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'} shadow`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function Visitanos() {
   useSeo({
@@ -34,9 +88,14 @@ export default function Visitanos() {
           <p className="mt-3 text-center text-gray-600">Ven a conocer los equipos en persona y recibe asesoría personalizada.</p>
         </ScrollReveal>
 
-        {/* Sede */}
-        <ScrollReveal className="mt-10 grid lg:grid-cols-5 gap-6">
-          <div className="relative lg:col-span-3 overflow-hidden rounded-3xl bg-gray-100 aspect-[4/3] lg:aspect-auto lg:min-h-[360px]">
+        {/* Fotos */}
+        <ScrollReveal className="mt-10">
+          <PhotoCarousel />
+        </ScrollReveal>
+
+        {/* Mapa */}
+        <ScrollReveal className="mt-10">
+          <div className="relative overflow-hidden rounded-3xl bg-gray-100 aspect-[4/3] sm:aspect-[21/9]">
             <iframe
               title="Ubicación de iSphone"
               src={`https://www.google.com/maps?q=${encodeURIComponent('Isphone S.A.S Ramiriquí')}&output=embed`}
@@ -45,31 +104,6 @@ export default function Visitanos() {
               referrerPolicy="no-referrer-when-downgrade"
             />
             <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" aria-label="Abrir en Google Maps" className="absolute inset-0" />
-          </div>
-          <div className="lg:col-span-2 rounded-3xl bg-purple-50 p-6 sm:p-8 flex flex-col justify-center gap-5">
-            <h2 className="text-2xl font-bold text-gray-900">Nuestra sede</h2>
-            <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 text-gray-700 hover:text-purple-700 underline-offset-4 hover:underline"><MapPin className="w-5 h-5 text-purple-700 shrink-0 mt-0.5" />{ADDRESS}</a>
-            <p className="flex items-start gap-3 text-gray-700"><Clock className="w-5 h-5 text-purple-700 shrink-0 mt-0.5" />{HOURS}</p>
-            <a
-              href={MAPS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="self-start rounded-full bg-purple-700 hover:bg-purple-800 text-white font-medium px-6 py-2.5 transition-colors"
-            >
-              Cómo llegar
-            </a>
-          </div>
-        </ScrollReveal>
-
-        {/* Fotos */}
-        <ScrollReveal className="mt-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Fotos de la tienda</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {PHOTOS.map(n => (
-              <div key={n} className="aspect-[4/3] rounded-2xl bg-gray-100 flex items-center justify-center text-gray-300">
-                <Camera className="w-8 h-8" />
-              </div>
-            ))}
           </div>
         </ScrollReveal>
 
