@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Package, ShieldCheck, Truck, RefreshCw, Wrench } from 'lucide-react'
-import { ScrollReveal, WHATSAPP_LINK, API_URL, Product, ColorOption, productPath, productIdFromParam, serviceCities } from '../shared'
+import { ScrollReveal, WHATSAPP_LINK, API_URL, Product, ColorOption, productPath, productIdFromParam, serviceCities, fetchProducts } from '../shared'
 import { useSeo, absoluteUrl, SITE_URL } from '../seo'
 import Breadcrumbs from '../components/Breadcrumbs'
 import { trackEvent } from '../analytics'
@@ -36,9 +36,8 @@ export default function ProductoDetail() {
   const [selImage, setSelImage] = useState('')
 
   useEffect(() => {
-    fetch(`${API_URL}/api/products`)
-      .then(r => r.json())
-      .then((data: Product[]) => {
+    fetchProducts<Product>()
+      .then(data => {
         const found = data.find((p: Product) => p.id === id)
         if (found) {
           const canonical = productPath(found)

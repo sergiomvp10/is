@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, Search, Zap } from 'lucide-react'
-import { WhatsAppIcon, WHATSAPP_LINK, API_URL, Product, productPath } from './shared'
+import { WhatsAppIcon, WHATSAPP_LINK, API_URL, Product, productPath, fetchProducts } from './shared'
 import { useAnalytics } from './analytics'
 
 export default function Layout() {
@@ -23,7 +23,7 @@ export default function Layout() {
 
   useEffect(() => {
     if (searchOpen && allProducts.length === 0) {
-      fetch(`${API_URL}/api/products`).then(r => r.json()).then((data: Product[]) => {
+      fetchProducts<Product>().then(data => {
         setAllProducts(data.map(p => ({
           ...p,
           priceRange: (p as unknown as Record<string, string>).price_range || p.priceRange || '',
