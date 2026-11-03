@@ -154,3 +154,22 @@ body {
 .animate-pulse-logo {
   animation: pulse-logo 1.5s ease-in-out infinite;
 }
+
+/* Botón que vibra cada pocos segundos */
+@keyframes shake {
+  0%, 70%, 100% { transform: translateX(0) rotate(0); }
+  73% { transform: translateX(-4px) rotate(-2deg); }
+  76% { transform: translateX(4px) rotate(2deg); }
+  79% { transform: translateX(-4px) rotate(-2deg); }
+  82% { transform: translateX(4px) rotate(2deg); }
+  85% { transform: translateX(-2px) rotate(-1deg); }
+  88% { transform: translateX(2px) rotate(1deg); }
+}
+
+.animate-shake {
+  animation: shake 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake { animation: none; }
+}
