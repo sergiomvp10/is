@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, Truck, RefreshCw, BadgeCheck, ArrowRight, ChevronDown } from 'lucide-react'
 import HeroVideo from '../components/HeroVideo'
-import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath, faqs, serviceCities, townPath } from '../shared'
+import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath, serviceCities, townPath } from '../shared'
 import { useSeo } from '../seo'
 
 const BRAND_LABELS: Record<string, string> = {
@@ -52,15 +52,6 @@ export default function Home() {
     title: 'iSphone | iPhone y celulares en Tunja, Ramiriquí y todo Boyacá',
     description: 'Tienda de iPhone, Samsung, iPad y MacBook en Boyacá: equipos nuevos y de exhibición con garantía en Tunja, Ramiriquí, Jenesano, Tibaná y toda la provincia de Márquez. Trade-In, servicio técnico y contra entrega.',
     path: '/',
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqs.map(f => ({
-        '@type': 'Question',
-        name: f.q,
-        acceptedAnswer: { '@type': 'Answer', text: f.a },
-      })),
-    },
   })
   const [categories, setCategories] = useState<Category[]>(() => readCache<Category[]>('/api/categories') || [])
   const [products, setProducts] = useState<Product[]>(() => mapProducts(readCache<RawProduct[]>('/api/products') || []))
@@ -420,27 +411,6 @@ export default function Home() {
         </details>
       </section>
 
-      {/* Preguntas frecuentes */}
-      <section className="py-14 lg:py-20 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 text-center">Preguntas frecuentes</h2>
-          </ScrollReveal>
-          <div className="divide-y divide-gray-100">
-            {faqs.map((f, i) => (
-              <ScrollReveal key={f.q} delay={i * 0.03}>
-                <details className="group py-4">
-                  <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-900 text-sm sm:text-base">
-                    {f.q}
-                    <ChevronDown className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180 shrink-0 ml-4" />
-                  </summary>
-                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed mt-3">{f.a}</p>
-                </details>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
     </>
   )
 }
