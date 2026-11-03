@@ -169,54 +169,74 @@ export default function Home() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 lg:hidden">
-              {categories.length === 0 && Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : ''}>
-                  <div className={`rounded-2xl aspect-square bg-gray-100 animate-pulse ${i === 0 ? 'lg:aspect-auto lg:h-full lg:rounded-3xl' : ''}`} />
-                  <div className="mt-3 h-5 w-24 rounded bg-gray-100 animate-pulse lg:mx-auto" />
-                </div>
-              ))}
-              {categories.map((cat, i) => (
-                <ScrollReveal key={cat.id} delay={i * 0.05} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : i === 1 ? 'lg:row-span-2' : ''}>
-                  <Link
-                    to={categoryPath(cat)}
-                    className="group flex flex-col h-full"
-                  >
-                    {i < 2 ? (
-                      <div className={`flex flex-col rounded-2xl overflow-hidden aspect-[3/4] lg:aspect-auto lg:flex-1 bg-white ${i === 0 ? 'lg:rounded-3xl' : ''}`}>
-                        <div className={`text-center px-3 ${i === 0 ? 'pt-4 sm:pt-8 lg:pt-12' : 'pt-4 sm:pt-6'}`}>
-                          <h3 className={`font-semibold tracking-tight text-gray-900 text-xl sm:text-3xl ${i === 0 ? 'lg:text-5xl' : 'lg:text-2xl'}`}>
-                            {cat.name}
-                          </h3>
-                          <span className={`inline-block mt-2 rounded-full bg-[#0071e3] group-hover:bg-[#0077ed] text-white font-medium transition-colors ${i === 0 ? 'px-4 py-1.5 text-sm lg:mt-5 lg:px-7 lg:py-2.5 lg:text-lg' : 'px-4 py-1.5 text-sm'}`}>
-                            Comprar
-                          </span>
-                        </div>
-                        <div className="flex-1 min-h-0 mt-3 lg:mt-6">
-                          <img
-                            src={cat.cover_image}
-                            alt={cat.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                      </div>
-                    ) : (<>
-                    <div className={`relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 group-hover:shadow-lg transition-shadow ${i === 0 ? 'lg:aspect-auto lg:flex-1 lg:rounded-3xl' : ''}`}>
-                      <img
-                        src={cat.cover_image}
-                        alt={cat.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+            {/* Móvil y tablet: iPhone y Android horizontales + resto en 2 columnas */}
+            <div className="lg:hidden">
+              {categories.length === 0 ? (
+                <>
+                  <div className="space-y-4">
+                    {[0, 1].map(i => <div key={i} className="h-48 sm:h-64 rounded-3xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    {[0, 1, 2, 3].map(i => <div key={i} className="aspect-square rounded-2xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {categories.slice(0, 2).map((cat, i) => (
+                      <ScrollReveal key={cat.id} delay={i * 0.05}>
+                        <Link
+                          to={categoryPath(cat)}
+                          className="group flex h-48 sm:h-64 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm"
+                        >
+                          <div className="flex flex-col justify-center w-[45%] pl-5 sm:pl-8 pr-2">
+                            <h3 className="text-2xl sm:text-4xl font-bold tracking-tight text-gray-900">{cat.name}</h3>
+                            {CATEGORY_TAGLINES[cat.slug] && (
+                              <p className="mt-1.5 text-xs sm:text-sm text-gray-600 leading-snug">{CATEGORY_TAGLINES[cat.slug]}</p>
+                            )}
+                            <span className="inline-flex items-center gap-1 self-start mt-3 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white text-xs sm:text-sm font-medium px-4 py-2 transition-colors">
+                              Ver modelos <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </div>
+                          <div className="w-[55%]">
+                            <img
+                              src={cat.cover_image}
+                              alt={cat.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                        </Link>
+                      </ScrollReveal>
+                    ))}
+                  </div>
+                  {categories.length > 2 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {categories.slice(2).map((cat, i) => (
+                        <ScrollReveal key={cat.id} delay={(i + 2) * 0.05}>
+                          <Link
+                            to={categoryPath(cat)}
+                            className="group relative block aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm"
+                          >
+                            <img
+                              src={cat.cover_image}
+                              alt={cat.name}
+                              loading="lazy"
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2.5 bg-gradient-to-t from-white via-white/90 to-transparent">
+                              <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">{cat.name}</h3>
+                              <span className="shrink-0 w-7 h-7 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white flex items-center justify-center transition-colors">
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </span>
+                            </div>
+                          </Link>
+                        </ScrollReveal>
+                      ))}
                     </div>
-                    <h3 className={`mt-3 text-base sm:text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors lg:text-center ${i === 0 ? 'lg:text-xl' : 'lg:text-base'}`}>
-                      {cat.name}
-                    </h3>
-                    </>)}
-                  </Link>
-                </ScrollReveal>
-              ))}
+                  )}
+                </>
+              )}
             </div>
           </div>
         </section>
