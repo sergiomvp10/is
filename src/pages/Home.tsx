@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ShieldCheck, Truck, RefreshCw, BadgeCheck, ArrowRight } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 import HeroVideo from '../components/HeroVideo'
 import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath } from '../shared'
 import { useSeo } from '../seo'
@@ -39,13 +39,6 @@ const CATEGORY_TAGLINES: Record<string, string> = {
 }
 
 const categoryPath = (cat: Category) => cat.slug === 'ofertas' ? '/ofertas' : `/categoria/${cat.slug}`
-
-const TRUST_ITEMS = [
-  { icon: ShieldCheck, title: 'Garantía incluida', text: 'Todos nuestros equipos con garantía' },
-  { icon: Truck, title: 'Contra entrega', text: 'Tunja, Boyacá, Bogotá, Chía y Cajicá' },
-  { icon: RefreshCw, title: 'Trade-In', text: 'Entrega tu equipo y actualiza' },
-  { icon: BadgeCheck, title: 'Exhibición como nuevo', text: 'Revisados y al mejor precio' },
-]
 
 export default function Home() {
   useSeo({
@@ -242,22 +235,15 @@ export default function Home() {
         </section>
       )}
 
-      {/* Trust strip */}
+      {/* Visítanos */}
       <section className="border-y border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {TRUST_ITEMS.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="flex items-start gap-3">
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-purple-700" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="max-w-7xl mx-auto px-4 py-10 lg:py-12 flex justify-center">
+          <Link
+            to="/visitanos"
+            className="animate-shake inline-flex items-center gap-2 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-lg font-semibold px-10 py-4 shadow-lg shadow-purple-700/30 transition-colors"
+          >
+            <MapPin className="w-5 h-5" /> Visítanos
+          </Link>
         </div>
       </section>
 
