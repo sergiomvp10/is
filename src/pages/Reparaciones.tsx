@@ -176,18 +176,18 @@ export default function Reparaciones() {
     <section className="py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="relative overflow-hidden rounded-3xl mb-10 min-h-[220px] sm:min-h-[320px] lg:min-h-[400px] flex items-center">
+          <div className="relative overflow-hidden rounded-3xl mb-10 min-h-[220px] sm:min-h-0 sm:aspect-[16/9] flex items-center">
             <img
               src="/images/reparaciones-hero.webp"
               alt="Técnico de iSphone reparando un iPhone"
-              className="absolute inset-0 w-full h-full object-cover object-[70%_center] sm:object-[right_20%]"
+              className="absolute inset-0 w-full h-full object-cover object-[70%_center] sm:object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent sm:from-white/70 sm:via-transparent" />
             <div className="relative w-1/2 sm:w-[45%] px-5 sm:px-10 lg:px-14 py-8">
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
                 ¿Qué deseas reparar?
               </h1>
-              <p className="text-sm sm:text-lg text-gray-600 leading-relaxed">
+              <p className="hidden sm:block text-lg text-gray-600 leading-relaxed">
                 Selecciona tu dispositivo y elige el tipo de reparación.
               </p>
             </div>
