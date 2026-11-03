@@ -17,6 +17,7 @@ const GOOGLE_REVIEWS = [
   { name: 'Willmer Ricardo Mora', text: 'Exelente atención. Muy buena variedad de productos y el almacén es muy bonito' },
   { name: 'Cristian Sarmiento', text: 'Compré un iPhone hace unos años y todo perfecto y este año regresé a hacer el cambio por uno más nuevo y me recibieron el anterior en parte de pago todo súper ágil y seguro' },
 ]
+const GOOGLE_REVIEW_COUNT = 52
 const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
 
@@ -117,9 +118,9 @@ export default function Visitanos() {
               ))}
             </div>
           </div>
-          <p className="mt-5 text-center">
-            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-700 hover:underline underline-offset-4">
-              Ver en Google
+          <p className="mt-5">
+            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:underline underline-offset-4">
+              Ver en Google ({GOOGLE_REVIEW_COUNT})
             </a>
           </p>
         </ScrollReveal>
