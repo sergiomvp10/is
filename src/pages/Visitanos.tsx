@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Star, Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { ScrollReveal } from '../shared'
 import { useSeo } from '../seo'
@@ -83,6 +83,83 @@ function PhotoCarousel() {
   )
 }
 
+const REVIEW_STEP = 304 // ancho de tarjeta (w-72) + gap (gap-4)
+const REVIEW_SPEED = 50 // px por segundo, de izquierda a derecha
+
+function ReviewsCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const offset = useRef(0)
+  const nudge = useRef(0)
+  const drag = useRef<{ x: number } | null>(null)
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const speed = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : REVIEW_SPEED
+    let last = performance.now()
+    let frame = 0
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1)
+      last = now
+      const step = nudge.current * Math.min(1, dt * 8)
+      nudge.current -= step
+      offset.current += speed * dt + step
+      const half = track.scrollWidth / 2
+      if (half > 0) {
+        while (offset.current > 0) offset.current -= half
+        while (offset.current <= -half) offset.current += half
+      }
+      track.style.transform = `translate3d(${offset.current}px,0,0)`
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    drag.current = { x: e.clientX }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current) return
+    offset.current += e.clientX - drag.current.x
+    drag.current.x = e.clientX
+  }
+  const onPointerUp = () => { drag.current = null }
+
+  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-800 hover:scale-105 transition'
+
+  return (
+    <div className="relative">
+      <div
+        className="overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <div ref={trackRef} className="flex w-max gap-4 py-1 will-change-transform">
+          {[...GOOGLE_REVIEWS, ...GOOGLE_REVIEWS].map((r, i) => (
+            <div key={i} aria-hidden={i >= GOOGLE_REVIEWS.length} className="w-72 shrink-0 flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
+              <div className="flex gap-0.5 text-amber-400">
+                {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="w-4 h-4 fill-current" />)}
+              </div>
+              <p className="mt-3 flex-1 text-sm text-gray-600 leading-relaxed">“{r.text}”</p>
+              <p className="mt-4 text-sm font-semibold text-gray-900">{r.name} <span className="font-normal text-gray-500">· Google</span></p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button type="button" onClick={() => { nudge.current += REVIEW_STEP }} aria-label="Reseñas anteriores" className={`${arrow} -left-2 sm:-left-4`}>
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button type="button" onClick={() => { nudge.current -= REVIEW_STEP }} aria-label="Reseñas siguientes" className={`${arrow} -right-2 sm:-right-4`}>
+        <ChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  )
+}
+
 export default function Visitanos() {
   useSeo({
     title: 'Visítanos | Tienda iSphone en Ramiriquí, Boyacá',
@@ -105,21 +182,9 @@ export default function Visitanos() {
         {/* Reseñas */}
         <ScrollReveal className="mt-16">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Nuestras reseñas</h2>
-          <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
-            <div className="animate-reviews flex w-max gap-4 py-1 hover:[animation-play-state:paused]">
-              {[...GOOGLE_REVIEWS, ...GOOGLE_REVIEWS].map((r, i) => (
-                <div key={i} aria-hidden={i >= GOOGLE_REVIEWS.length} className="w-72 shrink-0 flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
-                  <div className="flex gap-0.5 text-amber-400">
-                    {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="w-4 h-4 fill-current" />)}
-                  </div>
-                  <p className="mt-3 flex-1 text-sm text-gray-600 leading-relaxed">“{r.text}”</p>
-                  <p className="mt-4 text-sm font-semibold text-gray-900">{r.name} <span className="font-normal text-gray-500">· Google</span></p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ReviewsCarousel />
           <p className="mt-5">
-            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:underline underline-offset-4">
+            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 underline underline-offset-4 hover:text-blue-700">
               Ver en Google ({GOOGLE_REVIEW_COUNT})
             </a>
           </p>
