@@ -108,7 +108,7 @@ export default function Home() {
               {categories.length === 0 ? (
                 <>
                   <div className="grid grid-cols-2 gap-6">
-                    {[0, 1].map(i => <div key={i} className="h-[620px] rounded-3xl bg-gray-100 animate-pulse" />)}
+                    {[0, 1].map(i => <div key={i} className="aspect-[24/25] rounded-3xl bg-gray-100 animate-pulse" />)}
                   </div>
                   <div className="grid grid-cols-4 gap-6 mt-6">
                     {[0, 1, 2, 3].map(i => <div key={i} className="h-44 rounded-2xl bg-gray-100 animate-pulse" />)}
@@ -121,9 +121,15 @@ export default function Home() {
                       <ScrollReveal key={cat.id} delay={i * 0.05}>
                         <Link
                           to={categoryPath(cat)}
-                          className="group flex flex-col h-[620px] rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow"
+                          className="group relative block aspect-[24/25] rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow"
                         >
-                          <div className="text-center px-6 pt-10">
+                          <img
+                            src={cat.cover_image}
+                            alt={cat.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="relative text-center px-6 pt-10 xl:pt-12">
                             <h3 className="text-5xl font-semibold tracking-tight text-gray-900">{cat.name}</h3>
                             {CATEGORY_TAGLINES[cat.slug] && (
                               <p className="mt-3 text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
@@ -131,14 +137,6 @@ export default function Home() {
                             <span className="inline-flex items-center gap-1 mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white font-medium px-6 py-2.5 transition-colors">
                               Ver modelos <ArrowRight className="w-4 h-4" />
                             </span>
-                          </div>
-                          <div className="flex-1 min-h-0 mt-6">
-                            <img
-                              src={cat.cover_image}
-                              alt={cat.name}
-                              loading="lazy"
-                              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                            />
                           </div>
                         </Link>
                       </ScrollReveal>
