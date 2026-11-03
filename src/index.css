@@ -169,17 +169,3 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-shake { animation: none; }
 }
-
-/* Reseñas desplazándose de izquierda a derecha */
-@keyframes reviews-scroll {
-  0% { transform: translateX(calc(-50% - 0.5rem)); }
-  100% { transform: translateX(0); }
-}
-
-.animate-reviews {
-  animation: reviews-scroll 45s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-reviews { animation: none; }
-}
