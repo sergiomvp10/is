@@ -236,7 +236,7 @@ export default function Home() {
       )}
 
       {/* Visítanos */}
-      <section className="border-y border-gray-100 bg-white">
+      <section>
         <div className="max-w-7xl mx-auto px-4 py-10 lg:py-12 flex justify-center">
           <Link
             to="/visitanos"
