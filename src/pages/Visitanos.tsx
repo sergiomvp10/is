@@ -3,8 +3,7 @@ import { Star, Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-re
 import { ScrollReveal } from '../shared'
 import { useSeo } from '../seo'
 
-// TODO: agregar las URLs de las fotos reales de la sede.
-const PHOTOS: string[] = []
+const PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
 const PLACEHOLDER_COUNT = 5
 
 const GOOGLE_REVIEWS = [
@@ -36,7 +35,7 @@ function PhotoCarousel() {
 
   return (
     <div
-      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gray-100 shadow-sm aspect-[4/3] sm:aspect-[16/10]"
+      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gray-100 shadow-sm aspect-[4/3] sm:aspect-video"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
