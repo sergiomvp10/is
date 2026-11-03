@@ -104,7 +104,7 @@ export default function Visitanos() {
 
         {/* Reseñas */}
         <ScrollReveal className="mt-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Lo que dicen nuestros clientes</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Nuestras reseñas</h2>
           <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
             <div className="animate-reviews flex w-max gap-4 py-1 hover:[animation-play-state:paused]">
               {[...GOOGLE_REVIEWS, ...GOOGLE_REVIEWS].map((r, i) => (
