@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { MapPin, Menu, X, Search, Zap } from 'lucide-react'
+import { Menu, X, Search, Zap } from 'lucide-react'
 import { WhatsAppIcon, WHATSAPP_LINK, API_URL, Product, productPath } from './shared'
 import { useAnalytics } from './analytics'
 
@@ -146,8 +146,7 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center mb-8">
             <div>
-              <h4 className="text-white font-semibold mb-4">Contacto</h4>
-              <p className="flex items-center justify-center gap-2 text-sm"><MapPin className="w-4 h-4" /> Ramiriquí, Boyacá</p>
+              <p className="text-sm">Ramiriquí, Boyacá</p>
               <div className="flex justify-center gap-6 mt-4 text-gray-300">
                 <a href="https://www.instagram.com/isphone_sas" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-10 h-10 flex items-center justify-center hover:text-white transition-colors">
                   <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
