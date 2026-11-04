@@ -26,9 +26,12 @@ type SiteContent = {
   banner_text: string; banner_active: boolean
   hero_video: string; hero_video_poster: string
   hero_videos?: string[]
+  sede_photos?: string[]
 }
 
-type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'settings'
+const DEFAULT_SEDE_PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
+
+type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'sede' | 'settings'
 
 const MAX_VIDEO_MB = 100
 
@@ -529,8 +532,18 @@ function Admin() {
   const saveSiteContent = async () => {
     if (!siteContent) return
     setLoading(true)
+    let content = siteContent
+    if (content.sede_photos) {
+      try {
+        const sede_photos = await Promise.all(content.sede_photos.map((p, i) => uploadDataUrl(p, `sede-${Date.now()}-${i}`, token ?? "")))
+        content = { ...content, sede_photos }
+        setSiteContent(content)
+      } catch {
+        flash('Error al subir las fotos'); setLoading(false); return
+      }
+    }
     const res = await fetch(`${API_URL}/api/admin/site-content`, {
-      method: 'PUT', headers: headers(), body: JSON.stringify(siteContent)
+      method: 'PUT', headers: headers(), body: JSON.stringify(content)
     })
     if (res.status === 401) { handleLogout(); return }
     if (res.ok) flash('Contenido guardado')
@@ -567,6 +580,7 @@ function Admin() {
     { key: 'offers', label: 'Ofertas', icon: <Zap className="w-5 h-5" />, count: offers.length },
     { key: 'landing', label: 'Página principal', icon: <Home className="w-5 h-5" /> },
     { key: 'video', label: 'Video', icon: <Video className="w-5 h-5" /> },
+    { key: 'sede', label: 'Fotos de la sede', icon: <Image className="w-5 h-5" /> },
     { key: 'settings', label: 'Configuración', icon: <Settings className="w-5 h-5" /> },
   ]
 
@@ -1282,6 +1296,82 @@ function Admin() {
 
               <p className="text-xs text-gray-500">
                 Si no hay ningún video se usan los dos que vienen por defecto (iPhone 18 Pro y luego iPhone 17 Pro). Usa las flechas para cambiar el orden. Recuerda dar "Guardar cambios" después de subir, ordenar o eliminar.
+              </p>
+            </div>
+          </>
+        )}
+
+        {activeSection === 'sede' && siteContent && (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Fotos de la sede</h2>
+                <p className="text-gray-500 text-sm mt-1">Se muestran en orden en la tarjeta de fotos de la página Visítanos</p>
+              </div>
+              <button onClick={saveSiteContent} disabled={loading}
+                className="flex items-center justify-center gap-2 bg-purple-700 text-white px-4 py-2 rounded-xl hover:bg-purple-600 disabled:opacity-50 transition-colors w-full sm:w-auto">
+                <Save className="w-4 h-4" /> Guardar cambios
+              </button>
+            </div>
+
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-sm text-gray-300 space-y-1">
+                <p className="font-semibold text-purple-400">Recomendaciones</p>
+                <p>Fotos horizontales, de 1600×900 px o más. Las fotos se muestran completas, sin recortar.</p>
+                <p>Entre 3 y 8 fotos. La primera es la que se ve al entrar.</p>
+              </div>
+
+              {(() => {
+                const photos = siteContent.sede_photos ?? DEFAULT_SEDE_PHOTOS
+                const setPhotos = (next: string[]) => setSiteContent({ ...siteContent, sede_photos: next })
+                const move = (i: number, dir: -1 | 1) => {
+                  const j = i + dir
+                  if (j < 0 || j >= photos.length) return
+                  const next = [...photos]
+                  next.splice(j, 0, next.splice(i, 1)[0] ?? '')
+                  setPhotos(next.filter(Boolean))
+                }
+                return (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {photos.map((p, i) => (
+                      <div key={`${i}-${p.slice(0, 64)}`} className="bg-gray-800/40 border border-gray-700 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-300">Foto {i + 1}{i === 0 ? ' (primera)' : ''}</span>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Subir" aria-label="Subir"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button type="button" onClick={() => move(i, 1)} disabled={i === photos.length - 1} title="Bajar" aria-label="Bajar"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <ImageUpload
+                          value={p}
+                          onChange={nv => setPhotos(nv ? photos.map((x, k) => (k === i ? nv : x)) : photos.filter((_, k) => k !== i))}
+                          label=""
+                          maxSize={1600}
+                          fit="contain"
+                        />
+                      </div>
+                    ))}
+                    <div className="bg-gray-800/40 border border-dashed border-gray-700 rounded-xl p-3">
+                      <ImageUpload
+                        key={`new-${photos.length}`}
+                        value=""
+                        onChange={nv => { if (nv) setPhotos([...photos, nv]) }}
+                        label="Agregar foto"
+                        maxSize={1600}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
+
+              <p className="text-xs text-gray-500">
+                Usa las flechas para cambiar el orden y el ícono rojo para quitar una foto. Recuerda dar "Guardar cambios" al terminar.
               </p>
             </div>
           </>

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Star, Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
-import { ScrollReveal } from '../shared'
+import { API_URL, ScrollReveal } from '../shared'
 import { useSeo } from '../seo'
 
-const PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
+const DEFAULT_PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
 const PLACEHOLDER_COUNT = 5
 
 const GOOGLE_REVIEWS = [
@@ -21,8 +21,16 @@ const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
 
 function PhotoCarousel() {
-  const count = PHOTOS.length || PLACEHOLDER_COUNT
+  const [photos, setPhotos] = useState(DEFAULT_PHOTOS)
+  const count = photos.length || PLACEHOLDER_COUNT
   const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/site-content`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.sede_photos) && data.sede_photos.length) setPhotos(data.sede_photos) })
+      .catch(() => {})
+  }, [])
   const [paused, setPaused] = useState(false)
 
   useEffect(() => {
@@ -42,8 +50,11 @@ function PhotoCarousel() {
       <div className="flex h-full transition-transform duration-700 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="w-full h-full shrink-0" aria-hidden={i !== index}>
-            {PHOTOS[i] ? (
-              <img src={PHOTOS[i]} alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`} className="w-full h-full object-cover" loading={i === 0 ? 'eager' : 'lazy'} />
+            {photos[i] ? (
+              <div className="relative w-full h-full bg-gray-900">
+                <img src={photos[i]} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" loading={i === 0 ? 'eager' : 'lazy'} />
+                <img src={photos[i]} alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`} className="relative w-full h-full object-contain" loading={i === 0 ? 'eager' : 'lazy'} />
+              </div>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-purple-50 text-gray-300">
                 <Camera className="w-10 h-10" />
