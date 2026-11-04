@@ -24,6 +24,7 @@ function PhotoCarousel() {
   const [photos, setPhotos] = useState(DEFAULT_PHOTOS)
   const count = photos.length || PLACEHOLDER_COUNT
   const [index, setIndex] = useState(0)
+  const [ratio, setRatio] = useState(16 / 9)
 
   useEffect(() => {
     fetch(`${API_URL}/api/site-content`)
@@ -43,7 +44,8 @@ function PhotoCarousel() {
 
   return (
     <div
-      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gray-100 shadow-sm aspect-[4/3] sm:aspect-video"
+      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl shadow-sm"
+      style={{ aspectRatio: ratio }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -51,10 +53,13 @@ function PhotoCarousel() {
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="w-full h-full shrink-0" aria-hidden={i !== index}>
             {photos[i] ? (
-              <div className="relative w-full h-full bg-gray-900">
-                <img src={photos[i]} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" loading={i === 0 ? 'eager' : 'lazy'} />
-                <img src={photos[i]} alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`} className="relative w-full h-full object-contain" loading={i === 0 ? 'eager' : 'lazy'} />
-              </div>
+              <img
+                src={photos[i]}
+                alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`}
+                className="w-full h-full object-contain"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                onLoad={i === 0 ? e => { const { naturalWidth: w, naturalHeight: h } = e.currentTarget; if (w && h) setRatio(w / h) } : undefined}
+              />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-purple-50 text-gray-300">
                 <Camera className="w-10 h-10" />
@@ -64,10 +69,10 @@ function PhotoCarousel() {
           </div>
         ))}
       </div>
-      <button type="button" onClick={() => go(index - 1)} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+      <button type="button" onClick={() => go(index - 1)} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/25 backdrop-blur-md border border-white/40 shadow flex items-center justify-center text-white hover:bg-white/40 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
         <ChevronLeft className="w-5 h-5" />
       </button>
-      <button type="button" onClick={() => go(index + 1)} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+      <button type="button" onClick={() => go(index + 1)} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/25 backdrop-blur-md border border-white/40 shadow flex items-center justify-center text-white hover:bg-white/40 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
         <ChevronRight className="w-5 h-5" />
       </button>
       <a
@@ -78,17 +83,6 @@ function PhotoCarousel() {
       >
         Abrir en Maps <ExternalLink className="w-4 h-4 text-blue-600" />
       </a>
-      <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5">
-        {Array.from({ length: count }).map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => go(i)}
-            aria-label={`Ver foto ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'} shadow`}
-          />
-        ))}
-      </div>
     </div>
   )
 }
