@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ShieldCheck, Truck, RefreshCw, BadgeCheck, ArrowRight, ChevronDown } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 import HeroVideo from '../components/HeroVideo'
-import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath, faqs, serviceCities } from '../shared'
+import { ScrollReveal, API_URL, Category, Product, fetchList, readCache, productPath, fetchProducts } from '../shared'
 import { useSeo } from '../seo'
 
 const BRAND_LABELS: Record<string, string> = {
@@ -29,27 +29,22 @@ function mapProducts(data: RawProduct[]): Product[] {
   }))
 }
 
-const TRUST_ITEMS = [
-  { icon: ShieldCheck, title: 'Garantía incluida', text: 'Todos nuestros equipos con garantía' },
-  { icon: Truck, title: 'Contra entrega', text: 'Tunja, Boyacá, Bogotá, Chía y Cajicá' },
-  { icon: RefreshCw, title: 'Trade-In', text: 'Entrega tu equipo y actualiza' },
-  { icon: BadgeCheck, title: 'Exhibición como nuevo', text: 'Revisados y al mejor precio' },
-]
+const CATEGORY_TAGLINES: Record<string, string> = {
+  iphone: 'Diseñado para un mundo extraordinario.',
+  android: 'Potencia que se adapta a ti.',
+  accesorios: 'Todo lo que complementa tu experiencia.',
+  watch: 'Tecnología que te acompaña en cada paso.',
+  ipads: 'Creatividad y productividad en tus manos.',
+  macbooks: 'Potencia para llevar tus ideas más lejos.',
+}
+
+const categoryPath = (cat: Category) => cat.slug === 'ofertas' ? '/ofertas' : `/categoria/${cat.slug}`
 
 export default function Home() {
   useSeo({
-    title: 'iSphone | iPhone, Samsung, iPad y Mac en Tunja, Boyacá y Bogotá',
-    description: 'Tienda de tecnología Apple y Android en Tunja y Boyacá: iPhone, Samsung, iPad, MacBook y accesorios nuevos y de exhibición con garantía. Precios en Colombia, Trade-In, servicio técnico y contra entrega en Bogotá, Chía y Cajicá.',
+    title: 'iSphone | iPhone y celulares en Tunja, Ramiriquí y todo Boyacá',
+    description: 'Tienda de iPhone, Samsung, iPad y MacBook en Boyacá: equipos nuevos y de exhibición con garantía en Tunja, Ramiriquí, Jenesano, Tibaná y toda la provincia de Márquez. Trade-In, servicio técnico y contra entrega.',
     path: '/',
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqs.map(f => ({
-        '@type': 'Question',
-        name: f.q,
-        acceptedAnswer: { '@type': 'Answer', text: f.a },
-      })),
-    },
   })
   const [categories, setCategories] = useState<Category[]>(() => readCache<Category[]>('/api/categories') || [])
   const [products, setProducts] = useState<Product[]>(() => mapProducts(readCache<RawProduct[]>('/api/products') || []))
@@ -61,7 +56,7 @@ export default function Home() {
       .then(setCategories)
       .catch(() => {})
       .finally(() => setCategoriesReady(true))
-    fetchList<RawProduct>('/api/products').then(data => setProducts(mapProducts(data))).catch(() => {})
+    fetchProducts<RawProduct>().then(data => setProducts(mapProducts(data))).catch(() => {})
   }, [])
 
   const featuredSource = products.some(p => p.featured) ? products.filter(p => p.featured) : products
@@ -82,7 +77,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-center sm:justify-between mb-8 gap-4 px-14 sm:px-0">
               <div className="text-center sm:text-left">
-                <h2 className="text-xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Explora por categoría</h2>
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Encuentra lo que buscas</h2>
               </div>
               <Link
                 to="/catalogo"
@@ -92,54 +87,159 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-5">
-              {categories.length === 0 && Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : ''}>
-                  <div className={`rounded-2xl aspect-square bg-gray-100 animate-pulse ${i === 0 ? 'lg:aspect-auto lg:h-full lg:rounded-3xl' : ''}`} />
-                  <div className="mt-3 h-5 w-24 rounded bg-gray-100 animate-pulse lg:mx-auto" />
-                </div>
-              ))}
-              {categories.map((cat, i) => (
-                <ScrollReveal key={cat.id} delay={i * 0.05} className={i === 0 ? 'lg:col-span-2 lg:row-span-2' : ''}>
-                  <Link
-                    to={cat.slug === 'ofertas' ? '/ofertas' : `/categoria/${cat.slug}`}
-                    className="group flex flex-col h-full"
-                  >
-                    <div className={`relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 group-hover:shadow-lg transition-shadow ${i === 0 ? 'lg:aspect-auto lg:flex-1 lg:rounded-3xl' : ''}`}>
-                      <img
-                        src={cat.cover_image}
-                        alt={cat.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+            {/* Desktop: iPhone y Android protagonistas + resto en fila */}
+            <div className="hidden lg:block">
+              {categories.length === 0 ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    {[0, 1].map(i => <div key={i} className="aspect-[24/25] rounded-3xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                  <div className="grid grid-cols-4 gap-6 mt-6">
+                    {[0, 1, 2, 3].map(i => <div key={i} className="h-44 rounded-2xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    {categories.slice(0, 2).map((cat, i) => (
+                      <ScrollReveal key={cat.id} delay={i * 0.05}>
+                        <Link
+                          to={categoryPath(cat)}
+                          className="group relative block aspect-[24/25] rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow"
+                        >
+                          <img
+                            src={cat.cover_image}
+                            alt={cat.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="relative text-center px-6 pt-10 xl:pt-12">
+                            <h3 className="text-5xl font-semibold tracking-tight text-gray-900">{cat.name}</h3>
+                            {CATEGORY_TAGLINES[cat.slug] && (
+                              <p className="mt-3 text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
+                            )}
+                            <span className="inline-flex items-center gap-1 mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white font-medium px-6 py-2.5 transition-colors">
+                              Comprar
+                            </span>
+                          </div>
+                        </Link>
+                      </ScrollReveal>
+                    ))}
+                  </div>
+                  {categories.length > 2 && (
+                    <div className="grid grid-cols-4 gap-6 mt-6">
+                      {categories.slice(2).map((cat, i) => (
+                        <ScrollReveal key={cat.id} delay={(i + 2) * 0.05}>
+                          <Link
+                            to={categoryPath(cat)}
+                            className="group flex h-44 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm hover:shadow-lg transition-shadow"
+                          >
+                            <div className="flex flex-col w-1/2 p-5">
+                              <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">{cat.name}</h3>
+                              {CATEGORY_TAGLINES[cat.slug] && (
+                                <p className="mt-1.5 text-xs text-gray-600 leading-snug">{CATEGORY_TAGLINES[cat.slug]}</p>
+                              )}
+                              <span className="mt-auto w-8 h-8 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white flex items-center justify-center transition-colors">
+                                <ArrowRight className="w-4 h-4" />
+                              </span>
+                            </div>
+                            <div className="w-1/2">
+                              <img
+                                src={cat.cover_image}
+                                alt={cat.name}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            </div>
+                          </Link>
+                        </ScrollReveal>
+                      ))}
                     </div>
-                    <h3 className={`mt-3 text-base sm:text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors lg:text-center ${i === 0 ? 'lg:text-xl' : 'lg:text-base'}`}>
-                      {cat.name}
-                    </h3>
-                  </Link>
-                </ScrollReveal>
-              ))}
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Móvil y tablet: iPhone y Android con texto sobre la imagen + resto en 2 columnas */}
+            <div className="lg:hidden">
+              {categories.length === 0 ? (
+                <>
+                  <div className="space-y-4">
+                    {[0, 1].map(i => <div key={i} className="aspect-[24/25] rounded-3xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    {[0, 1, 2, 3].map(i => <div key={i} className="aspect-square rounded-2xl bg-gray-100 animate-pulse" />)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {categories.slice(0, 2).map((cat, i) => (
+                      <ScrollReveal key={cat.id} delay={i * 0.05}>
+                        <Link
+                          to={categoryPath(cat)}
+                          className="group relative block aspect-[24/25] rounded-3xl overflow-hidden bg-white shadow-sm"
+                        >
+                          <img
+                            src={cat.cover_image}
+                            alt={cat.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="relative text-center px-5 pt-6 sm:pt-10">
+                            <h3 className="text-3xl sm:text-5xl font-semibold tracking-tight text-gray-900">{cat.name}</h3>
+                            {CATEGORY_TAGLINES[cat.slug] && (
+                              <p className="mt-1.5 sm:mt-3 text-sm sm:text-base text-gray-600">{CATEGORY_TAGLINES[cat.slug]}</p>
+                            )}
+                            <span className="inline-flex items-center gap-1 mt-3 sm:mt-5 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white text-sm sm:text-base font-medium px-5 py-2 sm:px-6 sm:py-2.5 transition-colors">
+                              Comprar
+                            </span>
+                          </div>
+                        </Link>
+                      </ScrollReveal>
+                    ))}
+                  </div>
+                  {categories.length > 2 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {categories.slice(2).map((cat, i) => (
+                        <ScrollReveal key={cat.id} delay={(i + 2) * 0.05}>
+                          <Link
+                            to={categoryPath(cat)}
+                            className="group relative block aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-sm"
+                          >
+                            <img
+                              src={cat.cover_image}
+                              alt={cat.name}
+                              loading="lazy"
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2.5 bg-gradient-to-t from-white via-white/90 to-transparent">
+                              <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">{cat.name}</h3>
+                              <span className="shrink-0 w-7 h-7 rounded-full bg-purple-700 group-hover:bg-purple-800 text-white flex items-center justify-center transition-colors">
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </span>
+                            </div>
+                          </Link>
+                        </ScrollReveal>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </section>
       )}
 
-      {/* Trust strip */}
-      <section className="border-y border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {TRUST_ITEMS.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="flex items-start gap-3">
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-purple-700" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Visítanos */}
+      <section>
+        <div className="max-w-7xl mx-auto px-4 py-10 lg:py-12 flex justify-center">
+          <Link
+            to="/visitanos"
+            className="animate-shake inline-flex items-center gap-2 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-lg font-semibold px-10 py-4 shadow-lg shadow-purple-700/30 transition-colors"
+          >
+            <MapPin className="w-5 h-5" /> Visítanos
+          </Link>
         </div>
       </section>
 
@@ -265,66 +365,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Texto SEO + cobertura */}
-      <section className="py-14 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-5 gap-10">
-          <ScrollReveal className="lg:col-span-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-              Tienda de tecnología Apple y Android en Tunja, Boyacá y Bogotá
-            </h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
-              <p>
-                En iSphone vendemos <Link to="/categoria/iphone" className="text-purple-700 font-medium hover:underline">iPhone</Link>,{' '}
-                <Link to="/categoria/android" className="text-purple-700 font-medium hover:underline">celulares Samsung y Android</Link>, iPad, MacBook,
-                computadores portátiles y <Link to="/categoria/accesorios" className="text-purple-700 font-medium hover:underline">accesorios</Link>,
-                nuevos y de exhibición, siempre con garantía y con el precio en pesos colombianos visible por capacidad y color.
-              </p>
-              <p>
-                Un equipo de exhibición es un dispositivo 100% original que estuvo en vitrina: prácticamente nuevo, revisado por nuestros técnicos
-                y a un precio menor que uno sellado. Es la alternativa inteligente a comprar un celular de segunda.
-              </p>
-              <p>
-                Además ofrecemos <Link to="/trade-in" className="text-purple-700 font-medium hover:underline">Trade-In</Link> (tu equipo usado como parte de pago),{' '}
-                <Link to="/reparaciones" className="text-purple-700 font-medium hover:underline">servicio técnico</Link> para iPhone, iPad, Laptop, Apple Watch y Android, y{' '}
-                <Link to="/envios" className="text-purple-700 font-medium hover:underline">envíos con pago contra entrega</Link>.
-              </p>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1} className="lg:col-span-2">
-            <div className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 h-full">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Dónde atendemos</h3>
-              <ul className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                {serviceCities.map(c => (
-                  <li key={c} className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-purple-600" />{c}</li>
-                ))}
-              </ul>
-              <p className="text-xs text-gray-500 mt-4">Y envíos a todo Boyacá y Colombia.</p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
 
-      {/* Preguntas frecuentes */}
-      <section className="py-14 lg:py-20 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 text-center">Preguntas frecuentes</h2>
-          </ScrollReveal>
-          <div className="divide-y divide-gray-100">
-            {faqs.map((f, i) => (
-              <ScrollReveal key={f.q} delay={i * 0.03}>
-                <details className="group py-4">
-                  <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-900 text-sm sm:text-base">
-                    {f.q}
-                    <ChevronDown className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180 shrink-0 ml-4" />
-                  </summary>
-                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed mt-3">{f.a}</p>
-                </details>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
     </>
   )
 }

@@ -39,6 +39,92 @@ export async function fetchList<T>(path: string, retries = 2): Promise<T[]> {
   }
 }
 
+// Precios administrados desde Google Sheets ("Precios Isphone Website"): una pestaña por
+// categoría con las columnas "ID web" y "Precio". Si la hoja no responde se usan los del admin.
+const PRICES_SHEET_ID = '1Ahr4_lUG0_PJc3HSl2bcH2zBRGnynA8C7LaH4gZQDx0'
+const PRICES_SHEET_GIDS = ['0', '843702912', '108798763', '1975755580', '1705978634', '602744320']
+
+const idPart = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
+
+// "ID web": lo escribe el admin en la variante (o en el producto si no tiene variantes) y se busca en la hoja.
+const sheetKey = (id?: string | null) => (id ?? '').trim().toLowerCase()
+
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = [], cell = '', quoted = false
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++ }
+      else if (c === '"') quoted = false
+      else cell += c
+    } else if (c === '"') quoted = true
+    else if (c === ',') { row.push(cell); cell = '' }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++
+      row.push(cell); rows.push(row); row = []; cell = ''
+    } else cell += c
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row) }
+  return rows
+}
+
+const formatPrice = (n: number) => `$${n.toLocaleString('es-CO')}`
+const priceNumber = (s: string) => parseInt(s.replace(/[^\d]/g, ''), 10) || 0
+
+let sheetPrices: Promise<Map<string, number>> | null = null
+
+function fetchSheetPrices(): Promise<Map<string, number>> {
+  sheetPrices ??= Promise.all(PRICES_SHEET_GIDS.map(async gid => {
+    const r = await fetch(`https://docs.google.com/spreadsheets/d/${PRICES_SHEET_ID}/export?format=csv&gid=${gid}`, { signal: AbortSignal.timeout(5000) })
+    if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    return parseCsv(await r.text())
+  })).then(sheets => {
+    const prices = new Map<string, number>()
+    for (const [header = [], ...rows] of sheets) {
+      const idCol = header.findIndex(h => idPart(h) === 'idweb')
+      const priceCol = header.findIndex(h => idPart(h) === 'precio')
+      if (idCol < 0 || priceCol < 0) continue
+      for (const row of rows) {
+        const price = priceNumber(row[priceCol] ?? '')
+        if (row[idCol]?.trim() && price > 0) prices.set(row[idCol].trim().toLowerCase(), price)
+      }
+    }
+    return prices
+  }).catch(() => {
+    sheetPrices = null
+    return new Map<string, number>()
+  })
+  return sheetPrices
+}
+
+type PricedProduct = { id: number; web_id?: string | null; price_range?: string; priceRange?: string; variants?: Variant[] }
+
+// Reemplaza los precios de los productos (y su rango "Desde ...") por los de la hoja.
+export async function withSheetPrices<T extends PricedProduct>(products: T[]): Promise<T[]> {
+  const prices = await fetchSheetPrices()
+  if (prices.size === 0) return products
+  return products.map(p => {
+    if (!p.variants?.length) {
+      const price = prices.get(sheetKey(p.web_id))
+      return price ? { ...p, price_range: formatPrice(price), priceRange: formatPrice(price) } : p
+    }
+    const variants = p.variants.map(v => {
+      const price = prices.get(sheetKey(v.web_id))
+      return price ? { ...v, price: formatPrice(price) } : v
+    })
+    const nums = variants.map(v => priceNumber(v.price)).filter(n => n > 0)
+    if (!nums.length) return { ...p, variants }
+    const min = Math.min(...nums)
+    const range = nums.every(n => n === min) ? formatPrice(min) : `Desde ${formatPrice(min)}`
+    return { ...p, variants, price_range: range, priceRange: range }
+  })
+}
+
+export async function fetchProducts<T extends PricedProduct>(): Promise<T[]> {
+  return withSheetPrices(await fetchList<T>('/api/products'))
+}
+
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 175.216 175.552" xmlns="http://www.w3.org/2000/svg">
@@ -87,6 +173,7 @@ export type Variant = {
   color: string
   sim?: string
   price: string
+  web_id?: string
 }
 
 export type Product = {
@@ -135,16 +222,44 @@ export const testimonials = [
 
 // Ciudades donde operamos con atención directa (aparecen en textos y datos de negocio).
 export const serviceCities = [
-  'Tunja', 'Ramiriquí', 'Jenesano', 'Tibaná', 'Soracá', 'Ciénega', 'Paipa',
+  'Tunja', 'Ramiriquí', 'Jenesano', 'Tibaná', 'Soracá', 'Ciénega',
   'Bogotá', 'Chía', 'Cajicá',
 ]
 
 export const coverageTowns = [
-  'Tunja', 'Ramiriquí', 'Jenesano', 'Tibaná', 'Soracá', 'Ciénega', 'Paipa',
+  'Tunja', 'Ramiriquí', 'Jenesano', 'Tibaná', 'Soracá', 'Ciénega',
   'Bogotá', 'Chía', 'Cajicá', 'Boyacá', 'Viracachá', 'Zetaquira', 'Miraflores',
   'Ventaquemada', 'Nuevo Colón', 'Úmbita', 'Chinavita', 'Garagoa', 'Tenza',
-  'Duitama', 'Sogamoso', 'Chiquinquirá', 'Villa de Leyva',
+  'Chiquinquirá', 'Villa de Leyva',
 ]
+
+// Municipios de Boyacá con página propia (/celulares/:slug) para SEO local.
+export type Town = { name: string; slug: string; province: string; direct: boolean }
+export const boyacaTowns: Town[] = [
+  { name: 'Tunja', slug: 'tunja', province: 'Centro', direct: true },
+  { name: 'Ramiriquí', slug: 'ramiriqui', province: 'Márquez', direct: true },
+  { name: 'Jenesano', slug: 'jenesano', province: 'Márquez', direct: true },
+  { name: 'Tibaná', slug: 'tibana', province: 'Márquez', direct: true },
+  { name: 'Soracá', slug: 'soraca', province: 'Centro', direct: true },
+  { name: 'Ciénega', slug: 'cienega', province: 'Márquez', direct: true },
+  { name: 'Boyacá', slug: 'boyaca', province: 'Márquez', direct: false },
+  { name: 'Viracachá', slug: 'viracacha', province: 'Márquez', direct: false },
+  { name: 'Nuevo Colón', slug: 'nuevo-colon', province: 'Márquez', direct: false },
+  { name: 'Úmbita', slug: 'umbita', province: 'Márquez', direct: false },
+  { name: 'Ventaquemada', slug: 'ventaquemada', province: 'Centro', direct: false },
+  { name: 'Zetaquira', slug: 'zetaquira', province: 'Lengupá', direct: false },
+  { name: 'Miraflores', slug: 'miraflores', province: 'Lengupá', direct: false },
+  { name: 'Garagoa', slug: 'garagoa', province: 'Neira', direct: false },
+  { name: 'Chinavita', slug: 'chinavita', province: 'Neira', direct: false },
+  { name: 'Tenza', slug: 'tenza', province: 'Oriente', direct: false },
+  { name: 'Chiquinquirá', slug: 'chiquinquira', province: 'Occidente', direct: false },
+  { name: 'Villa de Leyva', slug: 'villa-de-leyva', province: 'Ricaurte', direct: false },
+]
+
+export function townPath(name: string): string | null {
+  const t = boyacaTowns.find(x => x.name === name)
+  return t ? `/celulares/${t.slug}` : null
+}
 
 export function slugify(text: string): string {
   return text
@@ -185,7 +300,7 @@ export const faqs = [
   },
   {
     q: '¿Hacen envíos y pago contra entrega?',
-    a: 'Sí. Atendemos en Tunja, Ramiriquí, Jenesano, Tibaná, Soracá, Ciénega, Paipa, Bogotá, Chía y Cajicá, y enviamos a todo Boyacá y Colombia. En varias zonas puedes recibir el equipo, revisarlo y pagar al recibir.',
+    a: 'Sí. Atendemos en Tunja, Ramiriquí, Jenesano, Tibaná, Soracá, Ciénega, Bogotá, Chía y Cajicá, y enviamos a todo Boyacá y Colombia. En varias zonas puedes recibir el equipo, revisarlo y pagar al recibir.',
   },
   {
     q: '¿Reparan iPhone, iPad, MacBook, Apple Watch y Android?',

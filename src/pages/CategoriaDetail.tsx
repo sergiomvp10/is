@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Smartphone } from 'lucide-react'
-import { ScrollReveal, API_URL, Product, Category, productPath, serviceCities } from '../shared'
+import { ScrollReveal, API_URL, Product, Category, productPath, serviceCities, fetchProducts } from '../shared'
 import { useSeo, SITE_URL } from '../seo'
 import Breadcrumbs from '../components/Breadcrumbs'
 
@@ -97,11 +97,11 @@ export default function CategoriaDetail() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/api/products`).then(r => r.json()),
+      fetchProducts<Product & { price_range: string }>(),
       fetch(`${API_URL}/api/categories`).then(r => r.json()),
     ])
       .then(([prods, cats]) => {
-        const mapped = prods.map((p: { id: number; name: string; brand: string; condition: string; image: string; storage: string[]; colors: string[]; price_range: string; badge?: string; category?: string }) => ({
+        const mapped = prods.map((p: Product & { price_range: string }) => ({
           ...p,
           priceRange: p.price_range,
           image: resolveImage(p.image),
@@ -181,25 +181,31 @@ export default function CategoriaDetail() {
         {/* Category header with cover */}
         {category && (
           <ScrollReveal>
-            <div className="relative rounded-3xl overflow-hidden mb-8 sm:mb-12 w-full h-44 sm:h-60 lg:h-72">
+            <div className="relative rounded-3xl overflow-hidden mb-8 sm:mb-12 w-full aspect-[8/3]">
               <img
                 src={resolveImage(category.header_image || category.cover_image)}
                 alt={category.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10">
-                <Link
-                  to="/catalogo"
-                  className="inline-flex items-center gap-1 text-white/80 text-sm mb-3 hover:text-white transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Volver al catálogo
-                </Link>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-                  {category.name}
-                </h1>
-              </div>
+              {category.header_image ? (
+                <h1 className="sr-only">{category.name}</h1>
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10">
+                    <Link
+                      to="/catalogo"
+                      className="inline-flex items-center gap-1 text-white/80 text-sm mb-3 hover:text-white transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Volver al catálogo
+                    </Link>
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
+                      {category.name}
+                    </h1>
+                  </div>
+                </>
+              )}
             </div>
           </ScrollReveal>
         )}

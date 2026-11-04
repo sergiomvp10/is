@@ -3,13 +3,14 @@ import { Trash2, Edit, Plus, LogOut, Save, X, FolderOpen, Package, Home, Zap, Se
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://isphone-api.vercel.app'
 
-type Variant = { storage: string; color: string; sim: string; price: string }
+type Variant = { storage: string; color: string; sim: string; price: string; web_id?: string }
 type ColorOption = { name: string; hex: string; images: string[] }
 type Product = {
   id: number; name: string; brand: string; condition: string; image: string; images?: string[]
   storage: string[]; colors: string[]; sim_options?: string[]; price_range: string; badge: string | null; category: string | null
   variants?: Variant[]
   featured?: boolean
+  web_id?: string | null
   color_options?: ColorOption[]
 }
 type Category = { id: number; name: string; slug: string; cover_image: string; header_image?: string; position: number }
@@ -25,9 +26,12 @@ type SiteContent = {
   banner_text: string; banner_active: boolean
   hero_video: string; hero_video_poster: string
   hero_videos?: string[]
+  sede_photos?: string[]
 }
 
-type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'settings'
+const DEFAULT_SEDE_PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
+
+type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'sede' | 'settings'
 
 const MAX_VIDEO_MB = 100
 
@@ -275,6 +279,7 @@ function Admin() {
   const [formError, setFormError] = useState('')
   const [formSim, setFormSim] = useState('')
   const [formPrice, setFormPrice] = useState('')
+  const [formWebId, setFormWebId] = useState('')
   const [formBadge, setFormBadge] = useState('')
   const [formCategory, setFormCategory] = useState('')
   const [formFeatured, setFormFeatured] = useState(false)
@@ -358,7 +363,7 @@ function Admin() {
   // --- Products ---
   const resetProductForm = () => {
     setFormName(''); setFormBrand('apple'); setFormCondition('Nuevo'); setFormStorage('')
-    setFormColorOpts([]); setFormError(''); setFormSim(''); setFormPrice(''); setFormBadge(''); setFormCategory(''); setFormImage('')
+    setFormColorOpts([]); setFormError(''); setFormSim(''); setFormPrice(''); setFormWebId(''); setFormBadge(''); setFormCategory(''); setFormImage('')
     setFormFeatured(false)
     setFormImages([])
     setFormVariants([])
@@ -374,7 +379,7 @@ function Admin() {
         : p.colors.map(name => ({ name, hex: '#888888', images: [] })),
     )
     setFormSim((p.sim_options || []).join(','))
-    setFormPrice(p.price_range); setFormBadge(p.badge || ''); setFormCategory(p.category || '')
+    setFormPrice(p.price_range); setFormWebId(p.web_id || ''); setFormBadge(p.badge || ''); setFormCategory(p.category || '')
     setFormFeatured(!!p.featured)
     setFormVariants(p.variants || [])
     setFormImage(p.image)
@@ -406,8 +411,8 @@ function Admin() {
         colors: colorOptions.map(c => c.name),
         color_options: colorOptions,
         sim_options: formSim.split(',').map(s => s.trim()).filter(Boolean),
-        price_range: formPrice, badge: formBadge || null, category: formCategory || null,
-        variants: formVariants.filter(v => v.price.trim()),
+        price_range: formPrice, web_id: formWebId.trim() || null, badge: formBadge || null, category: formCategory || null,
+        variants: formVariants.filter(v => v.price.trim()).map(v => ({ ...v, web_id: v.web_id?.trim() || undefined })),
         featured: formFeatured,
       }
       const url = editing ? `${API_URL}/api/admin/products/${editing.id}` : `${API_URL}/api/admin/products`
@@ -527,8 +532,18 @@ function Admin() {
   const saveSiteContent = async () => {
     if (!siteContent) return
     setLoading(true)
+    let content = siteContent
+    if (content.sede_photos) {
+      try {
+        const sede_photos = await Promise.all(content.sede_photos.map((p, i) => uploadDataUrl(p, `sede-${Date.now()}-${i}`, token ?? "")))
+        content = { ...content, sede_photos }
+        setSiteContent(content)
+      } catch {
+        flash('Error al subir las fotos'); setLoading(false); return
+      }
+    }
     const res = await fetch(`${API_URL}/api/admin/site-content`, {
-      method: 'PUT', headers: headers(), body: JSON.stringify(siteContent)
+      method: 'PUT', headers: headers(), body: JSON.stringify(content)
     })
     if (res.status === 401) { handleLogout(); return }
     if (res.ok) flash('Contenido guardado')
@@ -565,6 +580,7 @@ function Admin() {
     { key: 'offers', label: 'Ofertas', icon: <Zap className="w-5 h-5" />, count: offers.length },
     { key: 'landing', label: 'Página principal', icon: <Home className="w-5 h-5" /> },
     { key: 'video', label: 'Video', icon: <Video className="w-5 h-5" /> },
+    { key: 'sede', label: 'Fotos de la sede', icon: <Image className="w-5 h-5" /> },
     { key: 'settings', label: 'Configuración', icon: <Settings className="w-5 h-5" /> },
   ]
 
@@ -807,6 +823,7 @@ function Admin() {
                   </div>
                   <Input label="Tipos de SIM (separar con coma, opcional)" value={formSim} onChange={setFormSim} placeholder="eSIM,SIM Física" />
                   <Input label="Rango de precio" value={formPrice} onChange={setFormPrice} placeholder="Desde $3.400.000" required />
+                  <Input label="ID web (para el precio del Sheets si no tiene variantes)" value={formWebId} onChange={setFormWebId} placeholder="AIRTAG" />
                   <Input label="Etiqueta (opcional)" value={formBadge} onChange={setFormBadge} placeholder="Pro, Ultra, Nuevo..." />
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <input type="checkbox" checked={formFeatured} onChange={e => setFormFeatured(e.target.checked)}
@@ -858,6 +875,8 @@ function Admin() {
                                 </select>
                               )}
                               <input value={v.price} onChange={e => update('price', e.target.value)} placeholder="$3.400.000"
+                                className="flex-1 min-w-0 px-2 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500" />
+                              <input value={v.web_id ?? ''} onChange={e => update('web_id', e.target.value)} placeholder="ID web" title="ID web del Sheets"
                                 className="flex-1 min-w-0 px-2 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500" />
                               <button type="button" onClick={() => setFormVariants(formVariants.filter((_, i) => i !== idx))}
                                 className="p-2 text-gray-500 hover:text-red-400 shrink-0">
@@ -934,7 +953,7 @@ function Admin() {
                   <ImageUpload value={catCoverImage} onChange={setCatCoverImage} label="Imagen de portada (tarjeta del catálogo)"
                     hint="Cuadrada, 800×800 px recomendado" maxSize={800} aspect="aspect-square" />
                   <ImageUpload value={catHeaderImage} onChange={setCatHeaderImage} label="Imagen del encabezado (fondo del título dentro de la categoría)"
-                    hint="Horizontal, 1600×600 px recomendado (se recorta arriba y abajo, deja lo importante centrado)" maxSize={1600} />
+                    hint="Horizontal 1600×600 px (proporción 8:3). Se muestra completa, sin recorte ni capa oscura; incluye el nombre de la categoría en el diseño" maxSize={1600} />
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Posición (orden en catálogo)</label>
                     <input type="number" min={0} value={catPosition} onChange={e => setCatPosition(Number(e.target.value))}
@@ -1277,6 +1296,82 @@ function Admin() {
 
               <p className="text-xs text-gray-500">
                 Si no hay ningún video se usan los dos que vienen por defecto (iPhone 18 Pro y luego iPhone 17 Pro). Usa las flechas para cambiar el orden. Recuerda dar "Guardar cambios" después de subir, ordenar o eliminar.
+              </p>
+            </div>
+          </>
+        )}
+
+        {activeSection === 'sede' && siteContent && (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Fotos de la sede</h2>
+                <p className="text-gray-500 text-sm mt-1">Se muestran en orden en la tarjeta de fotos de la página Visítanos</p>
+              </div>
+              <button onClick={saveSiteContent} disabled={loading}
+                className="flex items-center justify-center gap-2 bg-purple-700 text-white px-4 py-2 rounded-xl hover:bg-purple-600 disabled:opacity-50 transition-colors w-full sm:w-auto">
+                <Save className="w-4 h-4" /> Guardar cambios
+              </button>
+            </div>
+
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-sm text-gray-300 space-y-1">
+                <p className="font-semibold text-purple-400">Recomendaciones</p>
+                <p>Fotos horizontales, de 1600×900 px o más. Las fotos se muestran completas, sin recortar.</p>
+                <p>Entre 3 y 8 fotos. La primera es la que se ve al entrar.</p>
+              </div>
+
+              {(() => {
+                const photos = siteContent.sede_photos ?? DEFAULT_SEDE_PHOTOS
+                const setPhotos = (next: string[]) => setSiteContent({ ...siteContent, sede_photos: next })
+                const move = (i: number, dir: -1 | 1) => {
+                  const j = i + dir
+                  if (j < 0 || j >= photos.length) return
+                  const next = [...photos]
+                  next.splice(j, 0, next.splice(i, 1)[0] ?? '')
+                  setPhotos(next.filter(Boolean))
+                }
+                return (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {photos.map((p, i) => (
+                      <div key={`${i}-${p.slice(0, 64)}`} className="bg-gray-800/40 border border-gray-700 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-300">Foto {i + 1}{i === 0 ? ' (primera)' : ''}</span>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Subir" aria-label="Subir"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button type="button" onClick={() => move(i, 1)} disabled={i === photos.length - 1} title="Bajar" aria-label="Bajar"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <ImageUpload
+                          value={p}
+                          onChange={nv => setPhotos(nv ? photos.map((x, k) => (k === i ? nv : x)) : photos.filter((_, k) => k !== i))}
+                          label=""
+                          maxSize={1600}
+                          fit="contain"
+                        />
+                      </div>
+                    ))}
+                    <div className="bg-gray-800/40 border border-dashed border-gray-700 rounded-xl p-3">
+                      <ImageUpload
+                        key={`new-${photos.length}`}
+                        value=""
+                        onChange={nv => { if (nv) setPhotos([...photos, nv]) }}
+                        label="Agregar foto"
+                        maxSize={1600}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
+
+              <p className="text-xs text-gray-500">
+                Usa las flechas para cambiar el orden y el ícono rojo para quitar una foto. Recuerda dar "Guardar cambios" al terminar.
               </p>
             </div>
           </>

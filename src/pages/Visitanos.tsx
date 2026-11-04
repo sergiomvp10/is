@@ -1,0 +1,205 @@
+import { useEffect, useRef, useState } from 'react'
+import { Star, Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { API_URL, ScrollReveal } from '../shared'
+import { useSeo } from '../seo'
+
+const DEFAULT_PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
+const PLACEHOLDER_COUNT = 5
+
+const GOOGLE_REVIEWS = [
+  { name: 'Nicol Plazas', text: 'Muy buen servicio, sus productos son de excelente calidad.' },
+  { name: 'Santiago Mora', text: 'Recomendados muy serios con las entregas y excelentes productos' },
+  { name: 'Vanessa Pinzon', text: 'Me encantó, llegó todo a tiempo y en perfecto estado súper recomendado para comprar sus celulares.' },
+  { name: 'Andrés Quiroga', text: 'Excelente lugar, muy buenos precios, excelente calidad de sus productos y gran variedad, recomendado' },
+  { name: 'Danna Noguera', text: 'Excelente atención, me ayudaron de forma amable y rápida, explicaron todo con claridad y el servicio fue muy bueno. Totalmente recomendado.' },
+  { name: 'William Ricardo Medina', text: 'Gran atención calidad en sus productos y servicios.' },
+  { name: 'Willmer Ricardo Mora', text: 'Exelente atención. Muy buena variedad de productos y el almacén es muy bonito' },
+  { name: 'Cristian Sarmiento', text: 'Compré un iPhone hace unos años y todo perfecto y este año regresé a hacer el cambio por uno más nuevo y me recibieron el anterior en parte de pago todo súper ágil y seguro' },
+]
+const GOOGLE_REVIEW_COUNT = 52
+const GOOGLE_PROFILE_URL = 'https://share.google/UxvAsVYdQhpDfiQ2U'
+const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Isphone S.A.S Ramiriquí')}`
+
+function PhotoCarousel() {
+  const [photos, setPhotos] = useState(DEFAULT_PHOTOS)
+  const count = photos.length || PLACEHOLDER_COUNT
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/site-content`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.sede_photos) && data.sede_photos.length) setPhotos(data.sede_photos) })
+      .catch(() => {})
+  }, [])
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = window.setInterval(() => setIndex(i => (i + 1) % count), 4000)
+    return () => window.clearInterval(id)
+  }, [paused, count])
+
+  const go = (i: number) => setIndex((i + count) % count)
+
+  return (
+    <div
+      className="group relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gray-100 shadow-sm aspect-[4/3] sm:aspect-video"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="flex h-full transition-transform duration-700 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="w-full h-full shrink-0" aria-hidden={i !== index}>
+            {photos[i] ? (
+              <div className="relative w-full h-full bg-gray-900">
+                <img src={photos[i]} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" loading={i === 0 ? 'eager' : 'lazy'} />
+                <img src={photos[i]} alt={`Tienda iSphone en Ramiriquí, foto ${i + 1}`} className="relative w-full h-full object-contain" loading={i === 0 ? 'eager' : 'lazy'} />
+              </div>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-purple-50 text-gray-300">
+                <Camera className="w-10 h-10" />
+                <span className="text-sm text-gray-400">Foto {i + 1}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => go(index - 1)} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button type="button" onClick={() => go(index + 1)} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:scale-105 transition sm:opacity-0 sm:group-hover:opacity-100">
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      <a
+        href={MAPS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-3 py-2 text-sm font-medium text-gray-900 shadow hover:bg-white"
+      >
+        Abrir en Maps <ExternalLink className="w-4 h-4 text-blue-600" />
+      </a>
+      <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5">
+        {Array.from({ length: count }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => go(i)}
+            aria-label={`Ver foto ${i + 1}`}
+            className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'} shadow`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const REVIEW_STEP = 304 // ancho de tarjeta (w-72) + gap (gap-4)
+const REVIEW_SPEED = 50 // px por segundo, de izquierda a derecha
+
+function ReviewsCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const offset = useRef(0)
+  const nudge = useRef(0)
+  const drag = useRef<{ x: number } | null>(null)
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const speed = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : REVIEW_SPEED
+    let last = performance.now()
+    let frame = 0
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1)
+      last = now
+      const step = nudge.current * Math.min(1, dt * 8)
+      nudge.current -= step
+      offset.current += speed * dt + step
+      const half = track.scrollWidth / 2
+      if (half > 0) {
+        while (offset.current > 0) offset.current -= half
+        while (offset.current <= -half) offset.current += half
+      }
+      track.style.transform = `translate3d(${offset.current}px,0,0)`
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    drag.current = { x: e.clientX }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current) return
+    offset.current += e.clientX - drag.current.x
+    drag.current.x = e.clientX
+  }
+  const onPointerUp = () => { drag.current = null }
+
+  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-800 hover:scale-105 transition'
+
+  return (
+    <div className="relative">
+      <div
+        className="overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <div ref={trackRef} className="flex w-max gap-4 py-1 will-change-transform">
+          {[...GOOGLE_REVIEWS, ...GOOGLE_REVIEWS].map((r, i) => (
+            <div key={i} aria-hidden={i >= GOOGLE_REVIEWS.length} className="w-72 shrink-0 flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
+              <div className="flex gap-0.5 text-amber-400">
+                {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="w-4 h-4 fill-current" />)}
+              </div>
+              <p className="mt-3 flex-1 text-sm text-gray-600 leading-relaxed">“{r.text}”</p>
+              <p className="mt-4 text-sm font-semibold text-gray-900">{r.name} <span className="font-normal text-gray-500">· Google</span></p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button type="button" onClick={() => { nudge.current += REVIEW_STEP }} aria-label="Reseñas anteriores" className={`${arrow} -left-2 sm:-left-4`}>
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button type="button" onClick={() => { nudge.current -= REVIEW_STEP }} aria-label="Reseñas siguientes" className={`${arrow} -right-2 sm:-right-4`}>
+        <ChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  )
+}
+
+export default function Visitanos() {
+  useSeo({
+    title: 'Visítanos | Tienda iSphone en Ramiriquí, Boyacá',
+    description: 'Conoce nuestra tienda física de iPhone y celulares en Ramiriquí, Boyacá: ubicación, fotos, reseñas de clientes y contacto por WhatsApp.',
+    path: '/visitanos',
+  })
+  return (
+    <section className="py-12 lg:py-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 text-center">Visítanos</h1>
+          <p className="mt-3 text-center text-gray-600">Ven a conocer los equipos en persona y recibe asesoría personalizada.</p>
+        </ScrollReveal>
+
+        {/* Fotos */}
+        <ScrollReveal className="mt-10">
+          <PhotoCarousel />
+        </ScrollReveal>
+
+        {/* Reseñas */}
+        <ScrollReveal className="mt-16">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Nuestras reseñas</h2>
+          <ReviewsCarousel />
+          <p className="mt-5">
+            <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 underline underline-offset-4 hover:text-blue-700">
+              Ver en Google ({GOOGLE_REVIEW_COUNT})
+            </a>
+          </p>
+        </ScrollReveal>
+      </div>
+    </section>
+  )
+}
