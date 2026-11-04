@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import {
   Smartphone, Tablet, Laptop, Monitor, Watch, Plug,
-  ChevronRight, ChevronLeft, BatteryCharging, ScanFace, Layers,
+  ChevronRight, ChevronDown, BatteryCharging, ScanFace, Layers,
   CircuitBoard, MemoryStick, Camera, Volume2, Settings, Sparkles,
   Keyboard, Cpu, HelpCircle, Wrench, Droplets, RefreshCw, ToggleLeft,
 } from 'lucide-react'
@@ -160,16 +160,17 @@ export default function Reparaciones() {
       })),
     ],
   })
-  const [selected, setSelected] = useState<Device>(DEVICES[0]!)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<Device | null>(null)
+  const optionsRef = useRef<HTMLDivElement>(null)
 
-  const scroll = (dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' })
+  const choose = (device: Device) => {
+    setSelected(device)
+    window.setTimeout(() => optionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
-  const waLink = (option: string) =>
+  const waLink = (device: Device, option: string) =>
     `${WHATSAPP_LINK}?text=${encodeURIComponent(
-      `Hola! Necesito reparación de mi ${selected.name}: ${option}`
+      `Hola! Necesito reparación de mi ${device.name}: ${option}`
     )}`
 
   return (
@@ -194,30 +195,20 @@ export default function Reparaciones() {
           </div>
         </ScrollReveal>
 
-        {/* Selector deslizable de dispositivos */}
-        <div className="relative mb-10">
-          <button
-            type="button"
-            aria-label="Anterior"
-            onClick={() => scroll('left')}
-            className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-purple-700"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div
-            ref={scrollRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 no-scrollbar sm:px-10 lg:gap-5"
-          >
-            {DEVICES.map(device => {
+        {/* Dispositivos en movimiento continuo de derecha a izquierda */}
+        <div className="relative mb-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
+          <div className="flex w-max animate-marquee py-2" style={{ animationDuration: '30s' }}>
+            {[0, 1, 2, 3].flatMap(copy => DEVICES.map(device => {
               const Icon = device.icon
-              const active = selected.id === device.id
+              const active = selected?.id === device.id
               return (
                 <button
-                  key={device.id}
+                  key={`${copy}-${device.id}`}
                   type="button"
-                  onClick={() => setSelected(device)}
-                  className={`snap-start shrink-0 w-36 sm:w-44 lg:w-auto lg:flex-1 rounded-2xl border p-5 text-center transition-all ${
+                  onClick={() => choose(device)}
+                  aria-hidden={copy > 0}
+                  tabIndex={copy > 0 ? -1 : 0}
+                  className={`shrink-0 w-36 sm:w-44 mr-4 lg:mr-5 rounded-2xl border p-5 text-center transition-colors ${
                     active
                       ? 'border-purple-600 bg-purple-50 shadow-lg'
                       : 'border-gray-100 bg-white hover:border-purple-200 hover:shadow-md'
@@ -235,51 +226,57 @@ export default function Reparaciones() {
                   </p>
                 </button>
               )
-            })}
+            }))}
           </div>
-
-          <button
-            type="button"
-            aria-label="Siguiente"
-            onClick={() => scroll('right')}
-            className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-purple-700"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Opciones del dispositivo seleccionado */}
-        <div className="rounded-3xl bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 p-6 sm:p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-1">{selected.name}</h2>
-          <p className="text-purple-100 text-sm sm:text-base">{selected.desc}</p>
+        <div ref={optionsRef} className="scroll-mt-24">
+          {selected ? (
+            <div key={selected.id} className="animate-fade-in">
+              <div className="rounded-3xl bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 p-6 sm:p-8 mb-8">
+                <h2 className="text-2xl font-bold text-white mb-1">{selected.name}</h2>
+                <p className="text-purple-100 text-sm sm:text-base">{selected.desc}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {selected.options.map(option => {
+                  const OptIcon = optionIcon(option)
+                  return (
+                    <a
+                      key={option}
+                      href={waLink(selected, option)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-between rounded-2xl border border-gray-100 bg-white px-5 py-4 hover:border-purple-300 hover:shadow-md transition-all"
+                    >
+                      <span className="flex items-center gap-3 text-gray-800 font-medium">
+                        <span className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                          <OptIcon className="w-4 h-4 text-purple-700" />
+                        </span>
+                        {option}
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-purple-700 transition-colors" />
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">Toca tu dispositivo para ver los tipos de reparación.</p>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {selected.options.map(option => {
-            const OptIcon = optionIcon(option)
-            return (
-              <a
-                key={option}
-                href={waLink(option)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between rounded-2xl border border-gray-100 bg-white px-5 py-4 hover:border-purple-300 hover:shadow-md transition-all"
-              >
-                <span className="flex items-center gap-3 text-gray-800 font-medium">
-                  <span className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                    <OptIcon className="w-4 h-4 text-purple-700" />
-                  </span>
-                  {option}
-                </span>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-purple-700 transition-colors" />
-              </a>
-            )
-          })}
-        </div>
-
-        <div className="mt-14 grid md:grid-cols-2 gap-8 border-t border-gray-100 pt-10">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Servicio técnico Apple y Android en Tunja y Boyacá</h2>
+        <details className="group mt-14 border-t border-gray-100 pt-10">
+          <summary className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 cursor-pointer list-none">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Servicio técnico Apple y Android en Tunja y Boyacá</h2>
+            <span className="inline-flex items-center gap-1 shrink-0 text-sm font-medium text-purple-700">
+              <span className="group-open:hidden">Ver más</span>
+              <span className="hidden group-open:inline">Ver menos</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="mt-4 max-w-3xl">
             <p className="text-sm text-gray-500 mb-3">
               Servicio técnico Apple y Android en Tunja, Boyacá, Bogotá, Chía y Cajicá · repuestos originales · garantía
             </p>
@@ -293,23 +290,7 @@ export default function Reparaciones() {
               <Link to="/trade-in" className="text-purple-700 font-medium hover:underline">Trade-In</Link> lo recibimos como parte de pago por uno nuevo o de exhibición.
             </p>
           </div>
-          <div className="bg-gray-50 rounded-3xl p-6 sm:p-8">
-            <h3 className="font-bold text-gray-900 mb-3">¿Cómo funciona?</h3>
-            <ol className="space-y-3 text-sm text-gray-700">
-              {[
-                'Eliges tu dispositivo y la falla, y nos escribes por WhatsApp.',
-                'Te damos diagnóstico y cotización sin costo.',
-                'Reparamos con repuestos originales y probamos el equipo.',
-                'Te lo entregamos con garantía en Tunja, Boyacá o Bogotá.',
-              ].map((t, i) => (
-                <li key={t} className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-700 text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                  {t}
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
+        </details>
       </div>
     </section>
   )
