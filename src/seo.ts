@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 export const SITE_URL = 'https://isphone.co'
 export const SITE_NAME = 'iSphone'
-const DEFAULT_IMAGE = `${SITE_URL}/images/isphone-logo.webp`
+const DEFAULT_IMAGE = `${SITE_URL}/images/og-isphone.jpg`
 
 type SeoOptions = {
   title: string

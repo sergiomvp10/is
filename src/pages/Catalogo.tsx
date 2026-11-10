@@ -24,7 +24,7 @@ export default function Catalogo() {
         {/* Categories grid - Samsung style */}
         {categories.length > 0 && (
           <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-8 text-center">Explora por categoría</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-8 text-center">Encuentra lo que buscas</h2>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {categories.map((cat, i) => (
                 <ScrollReveal key={cat.id} delay={i * 0.05}>

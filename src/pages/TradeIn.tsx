@@ -1,4 +1,3 @@
-import { RefreshCw } from 'lucide-react'
 import { ScrollReveal, WHATSAPP_LINK } from '../shared'
 import { useSeo } from '../seo'
 
@@ -11,7 +10,7 @@ export default function TradeIn() {
   return (
     <section className="py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-3xl">
           <ScrollReveal>
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
@@ -45,57 +44,7 @@ export default function TradeIn() {
               </a>
             </div>
           </ScrollReveal>
-
-          <ScrollReveal delay={0.2}>
-            <div className="relative">
-              <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <RefreshCw className="w-8 h-8 text-purple-700" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">¿Cómo funciona?</h3>
-                </div>
-                <div className="space-y-6">
-                  {[
-                    { step: '1', title: 'Escríbenos', desc: 'Cuéntanos qué equipo tienes y cuál quieres' },
-                    { step: '2', title: 'Evaluamos', desc: 'Te damos un valor justo por tu teléfono actual' },
-                    { step: '3', title: 'Actualiza', desc: 'Paga la diferencia y recibe tu nuevo equipo' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-purple-700 text-white flex items-center justify-center font-bold flex-shrink-0">
-                        {item.step}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{item.title}</h4>
-                        <p className="text-sm text-gray-500">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
         </div>
-
-        {/* Additional Trade-In info */}
-        <ScrollReveal delay={0.3}>
-          <div className="mt-16 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl p-8 sm:p-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">¿Qué equipos aceptamos?</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { brand: 'iPhone', desc: 'Desde iPhone 8 en adelante' },
-                { brand: 'Samsung', desc: 'Serie S, A y Note' },
-                { brand: 'Xiaomi', desc: 'Serie Mi, Redmi y Poco' },
-                { brand: 'Otros', desc: 'Motorola, Huawei, OnePlus' },
-              ].map((item, i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 text-center border border-gray-100">
-                  <h4 className="font-bold text-gray-900 mb-2">{item.brand}</h4>
-                  <p className="text-sm text-gray-500">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </ScrollReveal>
       </div>
     </section>
   )
