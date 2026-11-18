@@ -196,6 +196,18 @@ export type Product = {
 
 export type ColorOption = { name: string; hex: string; images: string[] }
 
+export type AndroidBrand = { slug: string; name: string; logo: string }
+
+export const DEFAULT_ANDROID_BRANDS: AndroidBrand[] = [
+  { slug: 'samsung', name: 'Samsung', logo: '' },
+  { slug: 'xiaomi', name: 'Xiaomi', logo: '' },
+  { slug: 'motorola', name: 'Motorola', logo: '' },
+  { slug: 'honor', name: 'Honor', logo: '' },
+]
+
+export const brandSlug = (name: string) =>
+  name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 export type Category = {
   id: number
   name: string

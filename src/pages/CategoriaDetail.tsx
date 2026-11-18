@@ -1,32 +1,24 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Smartphone } from 'lucide-react'
-import { ScrollReveal, API_URL, Product, Category, productPath, serviceCities, fetchProducts } from '../shared'
+import { ScrollReveal, API_URL, Product, Category, productPath, fetchProducts, DEFAULT_ANDROID_BRANDS, AndroidBrand } from '../shared'
 import { useSeo, SITE_URL } from '../seo'
 import Breadcrumbs from '../components/Breadcrumbs'
 
-type CategoryCopy = { title: string; description: string; intro: string; bullets: string[] }
-
-const CITIES = `${serviceCities.slice(0, -1).join(', ')} y ${serviceCities[serviceCities.length - 1]}`
+type CategoryCopy = { title: string; description: string }
 
 const CATEGORY_COPY: Record<string, CategoryCopy> = {
   iphone: {
     title: 'iPhone nuevos y de exhibición en Tunja y Boyacá — precio en Colombia',
     description: 'Tienda de iPhone en Tunja y Boyacá: iPhone 18, 17, 16 y 15 nuevos y de exhibición con garantía. Precios en pesos colombianos por capacidad, Trade-In y contra entrega en Bogotá, Chía y Cajicá.',
-    intro: `En iSphone encuentras iPhone nuevos sellados y iPhone de exhibición (originales, revisados y con garantía) a mejor precio que en las grandes cadenas. Ve el precio en Colombia de cada modelo por capacidad (128 GB, 256 GB, 512 GB, 1 TB) y color, entrega tu equipo actual como parte de pago con Trade-In y recibe contra entrega en ${CITIES}.`,
-    bullets: ['iPhone 18 Pro Max, 18 Pro, 17 Pro Max, 17 Pro, 17, 16 y 15', 'Nuevos sellados y de exhibición con garantía', 'Precio por capacidad y color, sin sorpresas', 'Trade-In: tu iPhone o Android usado como parte de pago'],
   },
   android: {
     title: 'Samsung y Android en Tunja y Boyacá — precio en Colombia',
     description: 'Samsung Galaxy S26 Ultra, S25 Ultra, A57, A37, A17 y más, nuevos y con garantía. Precio en Colombia por capacidad, Trade-In y envío contra entrega en Tunja, Boyacá, Bogotá, Chía y Cajicá.',
-    intro: `Celulares Android nuevos con garantía: Samsung Galaxy serie S (S26 Ultra, S26, S25 Ultra) y serie A (A57, A37, A26, A17, A07). Consulta el precio en Colombia por capacidad, cambia tu equipo actual con Trade-In y recibe contra entrega en ${CITIES}.`,
-    bullets: ['Samsung Galaxy S26 Ultra y S25 Ultra', 'Galaxy A57, A37, A26, A17 y A07 al mejor precio', 'Equipos nuevos con garantía', 'Soporte técnico Android: pantalla, batería, puerto de carga'],
   },
   accesorios: {
     title: 'Accesorios Apple y celulares en Tunja y Boyacá: AirPods, cargadores, fundas',
     description: 'Accesorios originales para iPhone, iPad, Mac y Android: AirPods, cargadores, cables, fundas y protectores. Compra en Tunja, Boyacá, Bogotá, Chía y Cajicá con envío contra entrega.',
-    intro: `Accesorios originales y de calidad para iPhone, iPad, Mac, Apple Watch y Android: AirPods, cargadores, cables, fundas, protectores de pantalla y más. Envíos y contra entrega en ${CITIES}.`,
-    bullets: ['AirPods y audio Apple', 'Cargadores y cables originales', 'Fundas y protectores para iPhone y Samsung', 'Asesoría por WhatsApp para elegir el accesorio correcto'],
   },
 }
 
@@ -34,8 +26,6 @@ function categoryCopy(slug: string, name: string): CategoryCopy {
   return CATEGORY_COPY[slug] ?? {
     title: `${name} nuevos y de exhibición en Tunja, Boyacá y Bogotá`,
     description: `Compra ${name} en iSphone: equipos nuevos y de exhibición con garantía, precio en Colombia y envío contra entrega en Tunja, Boyacá, Bogotá, Chía y Cajicá.`,
-    intro: `${name} nuevos y de exhibición con garantía en iSphone. Precio en Colombia actualizado, Trade-In y envío contra entrega en ${CITIES}.`,
-    bullets: ['Equipos nuevos y de exhibición con garantía', 'Precio en pesos colombianos por variante', 'Trade-In y contra entrega', 'Soporte técnico especializado'],
   }
 }
 
@@ -94,6 +84,26 @@ export default function CategoriaDetail() {
   const [category, setCategory] = useState<Category | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [conditionFilter, setConditionFilter] = useState<'Todos' | 'Nuevo' | 'Exhibición'>('Nuevo')
+  const [brands, setBrands] = useState<AndroidBrand[]>(DEFAULT_ANDROID_BRANDS)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isAndroid = slug === 'android'
+  const brandFilter = isAndroid ? searchParams.get('marca') : null
+
+  useEffect(() => {
+    if (!isAndroid) return
+    fetch(`${API_URL}/api/site-content`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.android_brands) && data.android_brands.length) setBrands(data.android_brands) })
+      .catch(() => {})
+  }, [isAndroid])
+
+  const selectBrand = (b: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (brandFilter === b) next.delete('marca')
+    else next.set('marca', b)
+    setSearchParams(next, { replace: true })
+  }
+  const brandName = (b: string) => brands.find(x => x.slug === b)?.name ?? b
 
   useEffect(() => {
     Promise.all([
@@ -154,12 +164,13 @@ export default function CategoriaDetail() {
     ],
   })
 
-  const hasMixedConditions = new Set(products.map((p) => p.condition)).size > 1
+  const brandProducts = brandFilter ? products.filter((p) => p.brand === brandFilter) : products
+  const hasMixedConditions = new Set(brandProducts.map((p) => p.condition)).size > 1
 
   const sorted = (
-    conditionFilter === 'Todos'
-      ? products
-      : products.filter((p) => p.condition === conditionFilter)
+    conditionFilter === 'Todos' || !hasMixedConditions
+      ? brandProducts
+      : brandProducts.filter((p) => p.condition === conditionFilter)
   )
     .slice()
     .sort((a, b) => modelRank(b) - modelRank(a) || priceValue(b) - priceValue(a))
@@ -223,6 +234,37 @@ export default function CategoriaDetail() {
           </div>
         )}
 
+        {isAndroid && category && brands.length > 0 && (
+          <div className="mb-8 sm:mb-12">
+            <h2 className="text-center text-base sm:text-2xl font-bold tracking-wide uppercase text-gray-900 mb-5 sm:mb-8">
+              Las mejores marcas están aquí
+            </h2>
+            <div className="overflow-hidden -mx-4 sm:mx-0">
+              <div className="flex w-max animate-marquee py-2" style={{ animationDuration: `${Math.max(brands.length, 4) * 6}s` }}>
+              {[0, 1, 2, 3].flatMap((copy) => brands.map((b) => (
+                <button
+                  key={`${copy}-${b.slug}`}
+                  type="button"
+                  onClick={() => selectBrand(b.slug)}
+                  aria-pressed={brandFilter === b.slug}
+                  aria-hidden={copy > 0 || undefined}
+                  tabIndex={copy > 0 ? -1 : undefined}
+                  className={`shrink-0 mr-3 sm:mr-5 w-36 sm:w-56 aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center overflow-hidden transition-all hover:shadow-md ${
+                    brandFilter === b.slug ? 'border-purple-600' : 'border-transparent'
+                  }`}
+                >
+                  {b.logo ? (
+                    <img src={b.logo} alt={b.name} className="w-full h-full object-contain" loading="lazy" />
+                  ) : (
+                    <span className="text-xl sm:text-3xl font-extrabold tracking-widest uppercase text-gray-900">{b.name}</span>
+                  )}
+                </button>
+              )))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Condition filter */}
         {hasMixedConditions && (
           <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
@@ -276,11 +318,7 @@ export default function CategoriaDetail() {
                   <div className="p-4 sm:p-5">
                     {product.brand !== 'apple' && (
                       <p className="text-[11px] sm:text-xs text-purple-600 font-semibold uppercase tracking-wide mb-1">
-                        {product.brand === 'samsung'
-                          ? 'Samsung'
-                          : product.brand === 'xiaomi'
-                            ? 'Xiaomi'
-                            : 'Motorola'}
+                        {brandName(product.brand)}
                       </p>
                     )}
                     <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 group-hover:text-purple-700 transition-colors line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem]">
@@ -295,6 +333,17 @@ export default function CategoriaDetail() {
                 </Link>
               </ScrollReveal>
             ))}
+          </div>
+        ) : brandFilter && brandProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">Pronto tendremos productos {brandName(brandFilter)}</p>
+            <button
+              onClick={() => selectBrand(brandFilter)}
+              className="inline-flex items-center gap-2 mt-4 text-purple-700 font-medium hover:text-purple-900 transition-colors"
+            >
+              Ver todas las marcas
+            </button>
           </div>
         ) : products.length > 0 ? (
           <div className="text-center py-16">
@@ -323,22 +372,6 @@ export default function CategoriaDetail() {
           </div>
         )}
 
-        <div className="mt-12 sm:mt-16 grid md:grid-cols-3 gap-8 border-t border-gray-100 pt-10">
-          <div className="md:col-span-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{catName} con garantía en Tunja, Boyacá y Bogotá</h2>
-            <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{copy.intro}</p>
-            <div className="flex flex-wrap gap-3 mt-5 text-sm font-medium">
-              <Link to="/trade-in" className="text-purple-700 hover:text-purple-900">Trade-In →</Link>
-              <Link to="/reparaciones" className="text-purple-700 hover:text-purple-900">Servicio técnico →</Link>
-              <Link to="/envios" className="text-purple-700 hover:text-purple-900">Envíos y contra entrega →</Link>
-            </div>
-          </div>
-          <ul className="space-y-2 text-sm text-gray-700">
-            {copy.bullets.map(b => (
-              <li key={b} className="flex gap-2"><span className="text-purple-600">✓</span>{b}</li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   )
