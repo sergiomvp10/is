@@ -236,7 +236,7 @@ export default function CategoriaDetail() {
 
         {isAndroid && category && brands.length > 0 && (
           <div className="mb-8 sm:mb-12">
-            <h2 className="text-center text-xl sm:text-3xl font-bold tracking-wide uppercase text-gray-900 mb-6 sm:mb-8">
+            <h2 className="text-center text-base sm:text-2xl font-bold tracking-wide uppercase text-gray-900 mb-5 sm:mb-8">
               Las mejores marcas están aquí
             </h2>
             <div className="flex gap-3 sm:gap-5 overflow-x-auto snap-x pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible">
