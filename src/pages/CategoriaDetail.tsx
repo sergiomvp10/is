@@ -239,14 +239,17 @@ export default function CategoriaDetail() {
             <h2 className="text-center text-base sm:text-2xl font-bold tracking-wide uppercase text-gray-900 mb-5 sm:mb-8">
               Las mejores marcas están aquí
             </h2>
-            <div className="flex gap-3 sm:gap-5 overflow-x-auto snap-x pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible">
-              {brands.map((b) => (
+            <div className="overflow-hidden -mx-4 sm:mx-0">
+              <div className="flex w-max animate-marquee py-2" style={{ animationDuration: `${Math.max(brands.length, 4) * 6}s` }}>
+              {[0, 1, 2, 3].flatMap((copy) => brands.map((b) => (
                 <button
-                  key={b.slug}
+                  key={`${copy}-${b.slug}`}
                   type="button"
                   onClick={() => selectBrand(b.slug)}
                   aria-pressed={brandFilter === b.slug}
-                  className={`snap-start shrink-0 w-36 sm:w-auto aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center overflow-hidden transition-all hover:shadow-md ${
+                  aria-hidden={copy > 0 || undefined}
+                  tabIndex={copy > 0 ? -1 : undefined}
+                  className={`shrink-0 mr-3 sm:mr-5 w-36 sm:w-56 aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center overflow-hidden transition-all hover:shadow-md ${
                     brandFilter === b.slug ? 'border-purple-600' : 'border-transparent'
                   }`}
                 >
@@ -256,7 +259,8 @@ export default function CategoriaDetail() {
                     <span className="text-xl sm:text-3xl font-extrabold tracking-widest uppercase text-gray-900">{b.name}</span>
                   )}
                 </button>
-              ))}
+              )))}
+              </div>
             </div>
           </div>
         )}
