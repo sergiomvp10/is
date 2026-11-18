@@ -246,12 +246,12 @@ export default function CategoriaDetail() {
                   type="button"
                   onClick={() => selectBrand(b.slug)}
                   aria-pressed={brandFilter === b.slug}
-                  className={`snap-start shrink-0 w-36 sm:w-auto aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center p-5 sm:p-8 transition-all hover:shadow-md ${
+                  className={`snap-start shrink-0 w-36 sm:w-auto aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center overflow-hidden transition-all hover:shadow-md ${
                     brandFilter === b.slug ? 'border-purple-600' : 'border-transparent'
                   }`}
                 >
                   {b.logo ? (
-                    <img src={b.logo} alt={b.name} className="max-w-full max-h-full object-contain" loading="lazy" />
+                    <img src={b.logo} alt={b.name} className="w-full h-full object-contain" loading="lazy" />
                   ) : (
                     <span className="text-xl sm:text-3xl font-extrabold tracking-widest uppercase text-gray-900">{b.name}</span>
                   )}
