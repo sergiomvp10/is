@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Smartphone } from 'lucide-react'
-import { ScrollReveal, API_URL, Product, Category, productPath, fetchProducts } from '../shared'
+import { ScrollReveal, API_URL, Product, Category, productPath, fetchProducts, DEFAULT_ANDROID_BRANDS, AndroidBrand } from '../shared'
 import { useSeo, SITE_URL } from '../seo'
 import Breadcrumbs from '../components/Breadcrumbs'
 
@@ -84,6 +84,26 @@ export default function CategoriaDetail() {
   const [category, setCategory] = useState<Category | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [conditionFilter, setConditionFilter] = useState<'Todos' | 'Nuevo' | 'Exhibición'>('Nuevo')
+  const [brands, setBrands] = useState<AndroidBrand[]>(DEFAULT_ANDROID_BRANDS)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isAndroid = slug === 'android'
+  const brandFilter = isAndroid ? searchParams.get('marca') : null
+
+  useEffect(() => {
+    if (!isAndroid) return
+    fetch(`${API_URL}/api/site-content`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.android_brands) && data.android_brands.length) setBrands(data.android_brands) })
+      .catch(() => {})
+  }, [isAndroid])
+
+  const selectBrand = (b: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (brandFilter === b) next.delete('marca')
+    else next.set('marca', b)
+    setSearchParams(next, { replace: true })
+  }
+  const brandName = (b: string) => brands.find(x => x.slug === b)?.name ?? b
 
   useEffect(() => {
     Promise.all([
@@ -144,12 +164,13 @@ export default function CategoriaDetail() {
     ],
   })
 
-  const hasMixedConditions = new Set(products.map((p) => p.condition)).size > 1
+  const brandProducts = brandFilter ? products.filter((p) => p.brand === brandFilter) : products
+  const hasMixedConditions = new Set(brandProducts.map((p) => p.condition)).size > 1
 
   const sorted = (
-    conditionFilter === 'Todos'
-      ? products
-      : products.filter((p) => p.condition === conditionFilter)
+    conditionFilter === 'Todos' || !hasMixedConditions
+      ? brandProducts
+      : brandProducts.filter((p) => p.condition === conditionFilter)
   )
     .slice()
     .sort((a, b) => modelRank(b) - modelRank(a) || priceValue(b) - priceValue(a))
@@ -213,6 +234,33 @@ export default function CategoriaDetail() {
           </div>
         )}
 
+        {isAndroid && category && brands.length > 0 && (
+          <div className="mb-8 sm:mb-12">
+            <h2 className="text-center text-xl sm:text-3xl font-bold tracking-wide uppercase text-gray-900 mb-6 sm:mb-8">
+              Las mejores marcas están aquí
+            </h2>
+            <div className="flex gap-3 sm:gap-5 overflow-x-auto snap-x pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible">
+              {brands.map((b) => (
+                <button
+                  key={b.slug}
+                  type="button"
+                  onClick={() => selectBrand(b.slug)}
+                  aria-pressed={brandFilter === b.slug}
+                  className={`snap-start shrink-0 w-36 sm:w-auto aspect-square rounded-2xl bg-white shadow-sm border-2 flex items-center justify-center p-5 sm:p-8 transition-all hover:shadow-md ${
+                    brandFilter === b.slug ? 'border-purple-600' : 'border-transparent'
+                  }`}
+                >
+                  {b.logo ? (
+                    <img src={b.logo} alt={b.name} className="max-w-full max-h-full object-contain" loading="lazy" />
+                  ) : (
+                    <span className="text-xl sm:text-3xl font-extrabold tracking-widest uppercase text-gray-900">{b.name}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Condition filter */}
         {hasMixedConditions && (
           <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
@@ -266,11 +314,7 @@ export default function CategoriaDetail() {
                   <div className="p-4 sm:p-5">
                     {product.brand !== 'apple' && (
                       <p className="text-[11px] sm:text-xs text-purple-600 font-semibold uppercase tracking-wide mb-1">
-                        {product.brand === 'samsung'
-                          ? 'Samsung'
-                          : product.brand === 'xiaomi'
-                            ? 'Xiaomi'
-                            : 'Motorola'}
+                        {brandName(product.brand)}
                       </p>
                     )}
                     <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 group-hover:text-purple-700 transition-colors line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem]">
@@ -285,6 +329,17 @@ export default function CategoriaDetail() {
                 </Link>
               </ScrollReveal>
             ))}
+          </div>
+        ) : brandFilter && brandProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">Pronto tendremos productos {brandName(brandFilter)}</p>
+            <button
+              onClick={() => selectBrand(brandFilter)}
+              className="inline-flex items-center gap-2 mt-4 text-purple-700 font-medium hover:text-purple-900 transition-colors"
+            >
+              Ver todas las marcas
+            </button>
           </div>
         ) : products.length > 0 ? (
           <div className="text-center py-16">

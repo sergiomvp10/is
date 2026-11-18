@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Trash2, Edit, Plus, LogOut, Save, X, FolderOpen, Package, Home, Zap, Settings, ChevronLeft, ChevronUp, ChevronDown, Eye, Upload, Image, GalleryHorizontalEnd, Menu, Video } from 'lucide-react'
+import { Trash2, Edit, Plus, LogOut, Save, X, FolderOpen, Package, Home, Zap, Settings, ChevronLeft, ChevronUp, ChevronDown, Eye, Upload, Image, GalleryHorizontalEnd, Menu, Video, Tags } from 'lucide-react'
+import { DEFAULT_ANDROID_BRANDS, brandSlug, type AndroidBrand } from './shared'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://isphone-api.vercel.app'
 
@@ -27,11 +28,12 @@ type SiteContent = {
   hero_video: string; hero_video_poster: string
   hero_videos?: string[]
   sede_photos?: string[]
+  android_brands?: AndroidBrand[]
 }
 
 const DEFAULT_SEDE_PHOTOS = Array.from({ length: 7 }, (_, i) => `/images/sede/sede-${i + 1}.webp`)
 
-type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'sede' | 'settings'
+type Section = 'products' | 'categories' | 'banners' | 'landing' | 'offers' | 'video' | 'sede' | 'brands' | 'settings'
 
 const MAX_VIDEO_MB = 100
 
@@ -533,6 +535,17 @@ function Admin() {
     if (!siteContent) return
     setLoading(true)
     let content = siteContent
+    if (content.android_brands) {
+      try {
+        const android_brands = await Promise.all(content.android_brands
+          .filter(b => b.name.trim())
+          .map(async (b, i) => ({ name: b.name.trim(), slug: b.slug || brandSlug(b.name), logo: await uploadDataUrl(b.logo, `marca-${Date.now()}-${i}`, token ?? "") })))
+        content = { ...content, android_brands }
+        setSiteContent(content)
+      } catch {
+        flash('Error al subir los logos'); setLoading(false); return
+      }
+    }
     if (content.sede_photos) {
       try {
         const sede_photos = await Promise.all(content.sede_photos.map((p, i) => uploadDataUrl(p, `sede-${Date.now()}-${i}`, token ?? "")))
@@ -581,6 +594,7 @@ function Admin() {
     { key: 'landing', label: 'Página principal', icon: <Home className="w-5 h-5" /> },
     { key: 'video', label: 'Video', icon: <Video className="w-5 h-5" /> },
     { key: 'sede', label: 'Fotos de la sede', icon: <Image className="w-5 h-5" /> },
+    { key: 'brands', label: 'Marcas Android', icon: <Tags className="w-5 h-5" /> },
     { key: 'settings', label: 'Configuración', icon: <Settings className="w-5 h-5" /> },
   ]
 
@@ -741,9 +755,12 @@ function Admin() {
                       <select value={formBrand} onChange={e => setFormBrand(e.target.value)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
                         <option value="apple">Apple</option>
-                        <option value="samsung">Samsung</option>
-                        <option value="xiaomi">Xiaomi</option>
-                        <option value="motorola">Motorola</option>
+                        {(siteContent?.android_brands?.length ? siteContent.android_brands : DEFAULT_ANDROID_BRANDS).map(b => (
+                          <option key={b.slug} value={b.slug}>{b.name}</option>
+                        ))}
+                        {formBrand !== 'apple' && !(siteContent?.android_brands?.length ? siteContent.android_brands : DEFAULT_ANDROID_BRANDS).some(b => b.slug === formBrand) && (
+                          <option value={formBrand}>{formBrand}</option>
+                        )}
                       </select>
                     </div>
                     <div>
@@ -1372,6 +1389,81 @@ function Admin() {
 
               <p className="text-xs text-gray-500">
                 Usa las flechas para cambiar el orden y el ícono rojo para quitar una foto. Recuerda dar "Guardar cambios" al terminar.
+              </p>
+            </div>
+          </>
+        )}
+
+        {activeSection === 'brands' && siteContent && (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Marcas Android</h2>
+                <p className="text-gray-500 text-sm mt-1">Recuadros de "Las mejores marcas están aquí" en la categoría Android</p>
+              </div>
+              <button onClick={saveSiteContent} disabled={loading}
+                className="flex items-center justify-center gap-2 bg-purple-700 text-white px-4 py-2 rounded-xl hover:bg-purple-600 disabled:opacity-50 transition-colors w-full sm:w-auto">
+                <Save className="w-4 h-4" /> Guardar cambios
+              </button>
+            </div>
+
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-sm text-gray-300 space-y-1">
+                <p className="font-semibold text-purple-400">Cómo funciona</p>
+                <p>Cada marca es un recuadro con su logo. Al tocarlo, el cliente ve solo los productos de esa marca.</p>
+                <p>Para que un producto aparezca en una marca, ábrelo en "Productos" y elige la marca en el campo "Marca".</p>
+                <p>Logo recomendado: PNG con fondo transparente o blanco. Si no subes logo, se muestra el nombre.</p>
+              </div>
+
+              {(() => {
+                const brands = siteContent.android_brands ?? DEFAULT_ANDROID_BRANDS
+                const setBrands = (next: AndroidBrand[]) => setSiteContent({ ...siteContent, android_brands: next })
+                const update = (i: number, patch: Partial<AndroidBrand>) => setBrands(brands.map((b, k) => (k === i ? { ...b, ...patch } : b)))
+                const move = (i: number, dir: -1 | 1) => {
+                  const j = i + dir
+                  if (j < 0 || j >= brands.length) return
+                  const next = [...brands]
+                  const [item] = next.splice(i, 1)
+                  if (item) next.splice(j, 0, item)
+                  setBrands(next)
+                }
+                return (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {brands.map((b, i) => (
+                      <div key={`${i}-${b.slug}`} className="bg-gray-800/40 border border-gray-700 rounded-xl p-3 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <input value={b.name} placeholder="Nombre de la marca"
+                            onChange={e => update(i, { name: e.target.value, ...(b.slug && products.some(p => p.brand === b.slug) ? {} : { slug: brandSlug(e.target.value) }) })}
+                            className="flex-1 min-w-0 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500" />
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Subir" aria-label="Subir"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button type="button" onClick={() => move(i, 1)} disabled={i === brands.length - 1} title="Bajar" aria-label="Bajar"
+                              className="w-8 h-8 rounded-lg bg-gray-700 text-gray-200 flex items-center justify-center hover:bg-gray-600 disabled:opacity-30">
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                            <button type="button" onClick={() => { if (confirm(`¿Quitar la marca ${b.name}?`)) setBrands(brands.filter((_, k) => k !== i)) }} title="Quitar" aria-label="Quitar"
+                              className="w-8 h-8 rounded-lg bg-red-600/80 text-white flex items-center justify-center hover:bg-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <ImageUpload value={b.logo} onChange={nv => update(i, { logo: nv })} label="Logo" maxSize={600} aspect="aspect-square" fit="contain" />
+                        <p className="text-xs text-gray-500">{products.filter(p => p.brand === b.slug).length} productos</p>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setBrands([...brands, { slug: '', name: '', logo: '' }])}
+                      className="bg-gray-800/40 border border-dashed border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-white hover:border-purple-500 transition-colors">
+                      <Plus className="w-6 h-6" /> Agregar marca
+                    </button>
+                  </div>
+                )
+              })()}
+
+              <p className="text-xs text-gray-500">
+                Recuerda dar "Guardar cambios" al terminar.
               </p>
             </div>
           </>
